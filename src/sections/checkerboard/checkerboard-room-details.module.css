@@ -1,0 +1,17 @@
+.print {
+  display: none;
+}
+@media print {
+  .notPrint {
+    display: none;
+  }
+
+  .print {
+    display: grid;
+  }
+
+  .pageBreak {
+    page-break-before: always;
+    break-before: page;
+  }
+}
