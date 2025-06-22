@@ -122,6 +122,7 @@ export default function ContractListView() {
   const { page: pageNum } = useParams();
   const navigate = useNavigate();
 
+
   const [page, setPage] = useState(0);
 
   const { enqueueSnackbar } = useSnackbar();
@@ -164,6 +165,7 @@ export default function ContractListView() {
     contractsLoading,
     contractsEmpty,
     remove,
+    terminate,
   } = useGetContracts(
     page + 1,
     filters.status.value === 'all' ? '' : filters.status.value,
@@ -194,6 +196,12 @@ export default function ContractListView() {
   const onDelete = () => {
     remove(selectedId, () => {
       enqueueSnackbar('Контракт удален успешно!');
+      onCloseDeleteModal();
+    });
+  };
+  const onTerminate = () => {
+    terminate(selectedId, () => {
+      enqueueSnackbar('Контракт расторгнут успешно!');
       onCloseDeleteModal();
     });
   };
@@ -476,26 +484,29 @@ export default function ContractListView() {
           links={[{ name: 'Dashboard', href: paths.dashboard.root }, { name: 'Контракты' }]}
           action={
             <Stack direction="row" gap={1}>
-              <Stack
-                onClick={exportToExcel.onTrue}
-                component={ButtonBase}
-                // loading={loadingExcelFile}
-                alignItems="center"
-                width={100}
-                height={50}
-                sx={{
-                  background: '#01a76f',
-                  py: 1,
-                  px: 1,
-                  borderRadius: 1,
-                }}
-                direction="row"
-              >
-                <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
-                <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                  Скачать
-                </Box>
-              </Stack>
+              {['1', '2'].includes(user?.role) && (
+                <Stack
+                  onClick={exportToExcel.onTrue}
+                  component={ButtonBase}
+                  // loading={loadingExcelFile}
+                  alignItems="center"
+                  width={100}
+                  height={50}
+                  sx={{
+                    background: '#01a76f',
+                    py: 1,
+                    px: 1,
+                    borderRadius: 1,
+                  }}
+                  direction="row"
+                >
+                  <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
+                  <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
+                    Скачать
+                  </Box>
+                </Stack>
+              )}
+
               {/* <Button
                 color="error"
                 variant="contained"
@@ -609,6 +620,7 @@ export default function ContractListView() {
                       onSelectRow={() => {}}
                       onPreviewDocument={() => onPreviewDocument(row.contract_id)}
                       onDeleteRow={(id) => onOpenDeleteModal(id)}
+                      onTerminateRow={(id) => onOpenDeleteModal(id)}
                       onEditRow={() => {}}
                     />
                   ))}
@@ -622,7 +634,7 @@ export default function ContractListView() {
           <TablePaginationCustom
             count={Number(filters.client?.length >= 3 ? searchResults?.length : count)}
             page={page}
-            rowsPerPage={20}
+            rowsPerPage={30}
             rowsPerPageOptions={[]}
             onPageChange={(_, nextPage) => navigate(`/dashboard/contracts/${nextPage}`)}
             onRowsPerPageChange={(_, nextPage) => setPage(nextPage)}
@@ -645,6 +657,18 @@ export default function ContractListView() {
           </Button>
         }
       />
+      <ConfirmDialog
+        open={confirm.value}
+        onClose={onCloseDeleteModal}
+        title="Расторжение контракта"
+        content="Вы уверены, что хотите расторгнуть этот контракт?"
+        action={
+          <Button variant="contained" color="error" onClick={onTerminate}>
+            Расторгнуть
+          </Button>
+        }
+      />
+
       {previewDocument.value && (
         <ContractPreivewFullscreenDialog
           mode="readOnly"

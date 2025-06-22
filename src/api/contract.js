@@ -13,6 +13,7 @@ export function useGetContracts(page = 1, contractStatus = '', contractType = ''
   const UPDATE_URL = endpoints.contract.update;
   const UPDATE_WITH_PLAN_URL = endpoints.contract.updateWithPlan;
   const DELETE_URL = endpoints.contract.delete;
+  const TERMINATE_URL = endpoints.contract.terminate;
   const UPLOAD_FILE_URL = endpoints.contract.uploadFile;
   const CONFIRM_URL = endpoints.contract.confirm;
 
@@ -138,6 +139,21 @@ export function useGetContracts(page = 1, contractStatus = '', contractType = ''
     },
     [DELETE_URL, URL, query]
   );
+  const terminate = useCallback(
+    async (id, cb) => {
+      if (!id) {
+        return false;
+      }
+      const { result } = await axios.delete(TERMINATE_URL, {
+        data: { contract_id: id },
+      });
+
+      cb();
+
+      return mutate(`${URL}?${query}`);
+    },
+    [TERMINATE_URL, URL, query]
+  );
 
   const uploadDocumentFile = useCallback(
     async (file, cb) => {
@@ -178,6 +194,7 @@ export function useGetContracts(page = 1, contractStatus = '', contractType = ''
       update,
       updateWithPlan,
       remove,
+      terminate,
       confirm,
     }),
     [
@@ -194,6 +211,7 @@ export function useGetContracts(page = 1, contractStatus = '', contractType = ''
       update,
       updateWithPlan,
       remove,
+      terminate,
       confirm,
     ]
   );

@@ -4,11 +4,7 @@ import sumBy from 'lodash/sumBy';
 import { useNavigate } from 'react-router';
 import { isEqual, isSameDay } from 'date-fns';
 import { useRef, useState, useEffect, useCallback } from 'react';
-// import { convert as convertNumberToWordsRu } from 'number-to-words-ru';
-import numberToWordsUz from 'number-to-words-uz';
-
-
-
+import { convert as convertNumberToWordsRu } from 'number-to-words-ru';
 
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
@@ -46,6 +42,7 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 import { useGetBarterContracts } from 'src/api/bartercontracts';
+import { useAuthContext } from 'src/auth/hooks';
 import BarterContractTableRow from '../bartercontract-table-row';
 
 import PaymentsNewForm from '../../payments/payments-new-form';
@@ -113,6 +110,8 @@ const renderClientName = (client) => {
 export default function BarterContractListView() {
   const { page: pageNum } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuthContext();
+
   const { enqueueSnackbar } = useSnackbar();
 
   const [page, setPage] = useState(0);
@@ -144,7 +143,7 @@ export default function BarterContractListView() {
       id: row?.invoice_number,
       contract_number: row?.contract_number,
       payment: fCurrency(row?.payment_amount),
-      payment_text: numberToWordsUz(row?.payment_amount, {
+      payment_text: convertNumberToWordsRu(row?.payment_amount, {
         showNumberParts: {
           fractional: false,
         },
@@ -361,26 +360,28 @@ export default function BarterContractListView() {
           ]}
           action={
             <Stack direction="row" gap={1}>
-              <Stack
-                onClick={exportToExcel.onTrue}
-                component={ButtonBase}
-                // loading={loadingExcelFile}
-                alignItems="center"
-                width={100}
-                height={50}
-                sx={{
-                  background: '#01a76f',
-                  py: 1,
-                  px: 1,
-                  borderRadius: 1,
-                }}
-                direction="row"
-              >
-                <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
-                <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                  Скачать
-                </Box>
-              </Stack>
+              {['1', '2'].includes(user?.role) && (
+                <Stack
+                  onClick={exportToExcel.onTrue}
+                  component={ButtonBase}
+                  // loading={loadingExcelFile}
+                  alignItems="center"
+                  width={100}
+                  height={50}
+                  sx={{
+                    background: '#01a76f',
+                    py: 1,
+                    px: 1,
+                    borderRadius: 1,
+                  }}
+                  direction="row"
+                >
+                  <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
+                  <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
+                    Скачать
+                  </Box>
+                </Stack>
+              )}
 
               <Button
                 onClick={newPayment.onTrue}
@@ -395,61 +396,61 @@ export default function BarterContractListView() {
             mb: { xs: 3, md: 5 },
           }}
         />
+        {['1', '2'].includes(user?.role) && (
+          <Card
+            sx={{
+              mb: { xs: 3, md: 5 },
+            }}
+          >
+            <Scrollbar>
+              <Stack
+                direction="row"
+                divider={<Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />}
+                sx={{ py: 2 }}
+              >
+                <PaymentsAnalytic
+                  title={renderFilterDay(filters.startDate, filters.endDate)}
+                  total={byAllTotal}
+                  count={byAllCount}
+                  icon="pixelarticons:calendar-tomorrow"
+                  color={theme.palette.text.secondary}
+                />
+                <PaymentsAnalytic
+                  title="Наличные"
+                  total={byPaidTotal?.payment_amount || 0}
+                  count={byPaidTotal?.payment_method_count || 0}
+                  icon="iconoir:hand-cash"
+                  color={theme.palette.error.main}
+                />
 
-        <Card
-          sx={{
-            mb: { xs: 3, md: 5 },
-          }}
-        >
-          <Scrollbar>
-            <Stack
-              direction="row"
-              divider={<Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />}
-              sx={{ py: 2 }}
-            >
-              <PaymentsAnalytic
-                title={renderFilterDay(filters.startDate, filters.endDate)}
-                total={byAllTotal}
-                count={byAllCount}
-                icon="pixelarticons:calendar-tomorrow"
-                color={theme.palette.text.secondary}
-              />
-              <PaymentsAnalytic
-                title="Наличные"
-                total={byPaidTotal?.payment_amount || 0}
-                count={byPaidTotal?.payment_method_count || 0}
-                icon="iconoir:hand-cash"
-                color={theme.palette.error.main}
-              />
+                <PaymentsAnalytic
+                  title="Терминал"
+                  total={byTerminalTotal?.payment_amount || 0}
+                  count={byTerminalTotal?.payment_method_count || 0}
+                  icon="solar:cash-out-outline"
+                  color={theme.palette.success.main}
+                />
 
-              <PaymentsAnalytic
-                title="Терминал"
-                total={byTerminalTotal?.payment_amount || 0}
-                count={byTerminalTotal?.payment_method_count || 0}
-                icon="solar:cash-out-outline"
-                color={theme.palette.success.main}
-              />
-
-              <PaymentsAnalytic
-                title="Click"
-                total={byClickTotal?.payment_amount || 0}
-                count={byClickTotal?.payment_method_count || 0}
-                icon="mdi:bank-outline"
-                iconSrc={clickLogo}
-                color={theme.palette.info.main}
-              />
-              <PaymentsAnalytic
-                title="Банк"
-                total={byP2PTotal?.payment_amount || 0}
-                count={byP2PTotal?.payment_method_count || 0}
-                price={getTotalAmount('pending')}
-                icon="solar:card-transfer-broken"
-                color={theme.palette.warning.main}
-              />
-            </Stack>
-          </Scrollbar>
-        </Card>
-
+                <PaymentsAnalytic
+                  title="Click"
+                  total={byClickTotal?.payment_amount || 0}
+                  count={byClickTotal?.payment_method_count || 0}
+                  icon="mdi:bank-outline"
+                  iconSrc={clickLogo}
+                  color={theme.palette.info.main}
+                />
+                <PaymentsAnalytic
+                  title="Банк"
+                  total={byP2PTotal?.payment_amount || 0}
+                  count={byP2PTotal?.payment_method_count || 0}
+                  price={getTotalAmount('pending')}
+                  icon="solar:card-transfer-broken"
+                  color={theme.palette.warning.main}
+                />
+              </Stack>
+            </Scrollbar>
+          </Card>
+        )}
         <Card>
           {/* <Tabs
             value={filters.status}

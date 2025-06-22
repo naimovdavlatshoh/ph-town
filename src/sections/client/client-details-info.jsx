@@ -8,10 +8,12 @@ import { Chip, Grid } from '@mui/material';
 import Divider from '@mui/material/Divider';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
 export default function ClientDetailInfo({ data }) {
+  const { user } = useAuthContext();
   const renderClientInfo = (
     <>
       <CardHeader title="Информация клиента" />
@@ -110,14 +112,16 @@ export default function ClientDetailInfo({ data }) {
             {data?.expire_date}
           </Link>
         </Stack>
-        <Stack direction="row" alignItems="center">
-          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            Файл:
-          </Box>
-          <Link underline="always" href={data?.download_link}>
-            Скачать файл
-          </Link>
-        </Stack>
+        {['1', '2'].includes(user?.role) && (
+          <Stack direction="row" alignItems="center">
+            <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
+              Файл:
+            </Box>
+            <Link underline="always" href={data?.download_link}>
+              Скачать файл
+            </Link>
+          </Stack>
+        )}
       </Stack>
     </>
   );
@@ -191,15 +195,16 @@ export default function ClientDetailInfo({ data }) {
             {data?.business_inn}
           </Stack>
         )}
-
-        <Stack direction="row" alignItems="center">
-          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            Файл:
-          </Box>
-          <Link underline="always" href={data?.file_path}>
-            Скачать файл
-          </Link>
-        </Stack>
+        {['1', '2'].includes(user?.role) && (
+          <Stack direction="row" alignItems="center">
+            <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
+              Файл:
+            </Box>
+            <Link underline="always" href={data?.file_path}>
+              Скачать файл
+            </Link>
+          </Stack>
+        )}
       </Stack>
     </>
   );
@@ -308,7 +313,7 @@ export default function ClientDetailInfo({ data }) {
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         {/* <Divider sx={{ borderStyle: 'dashed' }} /> */}
-        {/* 
+        {/*
         {renderPayment} */}
       </Grid>
     </Card>

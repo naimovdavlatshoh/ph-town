@@ -40,7 +40,7 @@ import {
   TableSelectedAction,
   TablePaginationCustom,
 } from 'src/components/table';
-
+import { useAuthContext } from 'src/auth/hooks';
 import ArrivalTableRow from '../arrival-table-row';
 import WarehouseNewForm from '../warehouse-new-form';
 import WarehouseTableRow from '../warehouse-table-row';
@@ -117,6 +117,7 @@ const loadImage = async (url) => {
 };
 
 export default function ArrivalListView() {
+  const { user } = useAuthContext();
   const [pageWarehouse, setPageWarehouse] = useState(0);
   const [pageArrival, setPageArrival] = useState(0);
 
@@ -217,26 +218,28 @@ export default function ArrivalListView() {
           action={
             <Stack gap={1} direction="row">
               {' '}
-              <Stack
-                onClick={exportToExcel.onTrue}
-                component={ButtonBase}
-                // loading={loadingExcelFile}
-                alignItems="center"
-                width={100}
-                height={50}
-                sx={{
-                  background: '#01a76f',
-                  py: 1,
-                  px: 1,
-                  borderRadius: 1,
-                }}
-                direction="row"
-              >
-                <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
-                <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                  Скачать
-                </Box>
-              </Stack>
+              {['1', '2'].includes(user?.role) && (
+                <Stack
+                  onClick={exportToExcel.onTrue}
+                  component={ButtonBase}
+                  // loading={loadingExcelFile}
+                  alignItems="center"
+                  width={100}
+                  height={50}
+                  sx={{
+                    background: '#01a76f',
+                    py: 1,
+                    px: 1,
+                    borderRadius: 1,
+                  }}
+                  direction="row"
+                >
+                  <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
+                  <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
+                    Скачать
+                  </Box>
+                </Stack>
+              )}
               <Button
                 onClick={openNew.onTrue}
                 variant="contained"

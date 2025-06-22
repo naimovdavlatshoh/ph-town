@@ -8,10 +8,12 @@ import { Chip, Grid } from '@mui/material';
 import Divider from '@mui/material/Divider';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
 export default function ClientDetailInfo({ data }) {
+  const { user } = useAuthContext();
   const renderClientInfo = (
     <>
       <CardHeader title="Информация клиента" />
@@ -104,9 +106,11 @@ export default function ClientDetailInfo({ data }) {
           <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
             Файл:
           </Box>
-          <Link underline="always" href={data?.file_path}>
-            Скачать файл
-          </Link>
+          {['1', '2'].includes(user?.role) && (
+            <Link underline="always" href={data?.file_path}>
+              Скачать файл
+            </Link>
+          )}
         </Stack>
       </Stack>
     </>
@@ -139,9 +143,11 @@ export default function ClientDetailInfo({ data }) {
           <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
             Файл:
           </Box>
-          <Link underline="always" href={data?.file_path}>
-            Скачать файл
-          </Link>
+          {['1', '2'].includes(user?.role) && (
+            <Link underline="always" href={data?.file_path}>
+              Скачать файл
+            </Link>
+          )}
         </Stack>
       </Stack>
     </>
@@ -241,7 +247,7 @@ export default function ClientDetailInfo({ data }) {
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         {/* <Divider sx={{ borderStyle: 'dashed' }} /> */}
-        {/* 
+        {/*
         {renderPayment} */}
       </Grid>
     </Card>

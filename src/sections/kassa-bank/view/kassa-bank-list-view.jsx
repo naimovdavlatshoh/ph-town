@@ -30,7 +30,7 @@ import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 
 import ContractsBankExcelDialog from 'src/sections/contracts/contracts-bank-export-dialog';
-
+import { useAuthContext } from 'src/auth/hooks';
 import KassaBankArrivalListView from './kassa-bank-arrival-list-view';
 import KassaBankExpenditureListView from './kassa-bank-expenditure-list-view';
 
@@ -57,6 +57,7 @@ const defaultFilters = {
 // ----------------------------------------------------------------------
 
 export default function KassaBankListView() {
+  const { user } = useAuthContext();
   const navigate = useNavigate();
   const [pageWarehouse, setPageWarehouse] = useState(0);
   const [pageArrival, setPageArrival] = useState(0);
@@ -143,27 +144,31 @@ export default function KassaBankListView() {
           heading="Касса-Банк"
           links={[{ name: 'Dashboard', href: paths.dashboard.root }, { name: 'Касса-Банк' }]}
           action={
-            <Stack
-              onClick={exportToExcel.onTrue}
-              component={ButtonBase}
-              loading={loadingExcelFile}
-              alignItems="center"
-              width={100}
-              height={50}
-              sx={{
-                // background: false ? '#01a76f33' : '#01a76f',
-                background: '#01a76f',
-                py: 1,
-                px: 1,
-                borderRadius: 0.5,
-              }}
-              direction="row"
-            >
-              <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
-              <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                Скачать
-              </Box>
-            </Stack>
+            <>
+              {['1', '2'].includes(user?.role) && (
+                <Stack
+                  onClick={exportToExcel.onTrue}
+                  component={ButtonBase}
+                  loading={loadingExcelFile}
+                  alignItems="center"
+                  width={100}
+                  height={50}
+                  sx={{
+                    // background: false ? '#01a76f33' : '#01a76f',
+                    background: '#01a76f',
+                    py: 1,
+                    px: 1,
+                    borderRadius: 0.5,
+                  }}
+                  direction="row"
+                >
+                  <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
+                  <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
+                    Скачать
+                  </Box>
+                </Stack>
+              )}
+            </>
           }
           // action={
           //   <Stack gap={1} direction="row">

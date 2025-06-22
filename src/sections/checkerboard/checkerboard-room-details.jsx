@@ -478,6 +478,9 @@ export default function CheckerboardRoomDetails({
     </Stack>
   );
 
+  console.log(apartment);
+
+
   return (
     <>
       <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
@@ -1050,8 +1053,9 @@ export default function CheckerboardRoomDetails({
                     >
                       {`${renderClientName(apartment?.temp_reservation_info)}`}
                     </Link>{' '}
-                    забронировал помещение до {apartment?.temp_reservation_info?.expire_date} через
-                    оператора {apartment?.temp_reservation_info?.operator}{' '}
+                    забронировал помещение до <span style={{color:"red"}}>{apartment?.temp_reservation_info?.expire_date}</span> через
+                    оператора <span style={{color:"green"}}>{apartment?.temp_reservation_info?.operator}{' '}</span> <br />
+                    Комментарий : <span style={{color:"green"}}>{apartment?.temp_reservation_info?.comments}</span>
                     <Button
                       variant="text"
                       color="error"

@@ -11,10 +11,12 @@ import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 
 import Iconify from 'src/components/iconify';
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
 export default function ClientDetailInfo({ customer, delivery, payment, shippingAddress }) {
+   const { user } = useAuthContext();
   const renderClientInfo = (
     <>
       <CardHeader title="Информация клиента" />
@@ -89,14 +91,17 @@ export default function ClientDetailInfo({ customer, delivery, payment, shipping
             03.04.2012
           </Link>
         </Stack>
-        <Stack direction="row" alignItems="center">
-          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            Файл:
-          </Box>
-          <Link underline="always" href="#">
-            Скачать файл
-          </Link>
-        </Stack>
+        {['1', '2'].includes(user?.role) && (
+          <Stack direction="row" alignItems="center">
+            <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
+              Файл:
+            </Box>
+
+            <Link underline="always" href="#">
+              Скачать файл
+            </Link>
+          </Stack>
+        )}
       </Stack>
     </>
   );
@@ -162,7 +167,7 @@ export default function ClientDetailInfo({ customer, delivery, payment, shipping
         {renderAdress}
 
         {/* <Divider sx={{ borderStyle: 'dashed' }} /> */}
-        {/* 
+        {/*
         {renderPayment} */}
       </Stack>
     </Card>

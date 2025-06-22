@@ -38,8 +38,9 @@ import {
   TableHeadCustom,
   TablePaginationCustom,
 } from 'src/components/table';
-
+import { useAuthContext } from 'src/auth/hooks';
 import OverdueTableRow from './overdue-table-row';
+
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@/build/pdf.worker.js`;
 
@@ -60,6 +61,7 @@ const TABLE_HEAD = [
 
 export default function ContractOverduesFullscreen({ open, handleClose }) {
   const router = useRouter();
+  const { user } = useAuthContext();
   const [loadingExcelFile, setLoadingExcelFile] = useState(false);
   const [html, setHtml] = useState('');
   const [comments, setComments] = useState([]);
@@ -138,9 +140,11 @@ export default function ContractOverduesFullscreen({ open, handleClose }) {
               direction="row"
             >
               <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
-              <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                Скачать
-              </Box>
+              {['1', '2'].includes(user?.role) && (
+                <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
+                  Скачать
+                </Box>
+              )}
             </Stack>
             <LoadingButton autoFocus color="inherit" onClick={handleClose}>
               Закрыть

@@ -321,9 +321,11 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
             direction="row"
           >
             <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
-            <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-              Скачать
-            </Box>
+            {['1', '2'].includes(user?.role) && (
+              <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
+                Скачать
+              </Box>
+            )}
           </Stack>
         </Stack>
       </Stack>

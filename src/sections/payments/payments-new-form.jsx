@@ -4,6 +4,10 @@ import { useSnackbar } from 'notistack';
 import { useForm } from 'react-hook-form';
 import { useMemo, useState, useEffect } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { format } from 'date-fns';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -77,6 +81,7 @@ export default function PaymentsNewForm({
     contract: Yup.string().required('Выберите контракт'),
     paymentMethod: Yup.string().required('Выберите метод оплаты'),
     paymentAmount: Yup.string().required('Введите сумму'),
+    paymentDate: Yup.date().required('Введите дату').nullable(),
     comments: Yup.string(),
     typeOfExpense: Yup.bool().required(''),
   });
@@ -97,6 +102,7 @@ export default function PaymentsNewForm({
       paymentMethod: '1',
       cash_type: '1',
       paymentAmount: '',
+      paymentDate: new Date(),
       comments: '',
       typeOfExpense: data?.type_of_expense === '1',
     }),
@@ -139,6 +145,7 @@ export default function PaymentsNewForm({
           client_id: values?.client?.client_id,
           contract_id: values?.contract,
           payment_amount: values?.paymentAmount?.replace(/,/g, ''),
+          created_at: values?.paymentDate ? format(new Date(values.paymentDate), 'yyyy-MM-dd') : null,
           payment_method: values?.paymentMethod,
           comments: values?.comments,
           type_of_expense: values?.typeOfExpense ? '1' : '0',
@@ -260,28 +267,6 @@ export default function PaymentsNewForm({
         ))}
       </RHFSelect>
 
-      {/* <RHFSelect
-      name="cashType"
-      label="Валюта"
-      InputLabelProps={{ shrink: true }}
-      sx={{
-        maxWidth: { md: 160 },
-      }}
-    >
-      {CASH_TYPES_OPTIONS.map((el, idx) => (
-        <MenuItem key={el.idx} value={el.value}>
-          <Stack
-            width="100%"
-            direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <Typography variant="caption"> {el.label}</Typography>
-          </Stack>
-        </MenuItem>
-      ))}
-    </RHFSelect> */}
-
       <RHFCurrencyField
         name="paymentAmount"
         label="Сумма оплаты"
@@ -293,6 +278,22 @@ export default function PaymentsNewForm({
           sx: { color: makeColor(methods.watch().paymentAmount) },
         }}
       />
+
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <DatePicker
+          label="Дата оплаты"
+          value={methods.watch('paymentDate')}
+          onChange={(newValue) => methods.setValue('paymentDate', newValue, { shouldValidate: true })}
+          maxDate={new Date()}
+          renderInput={(params) => (
+            <RHFTextField
+              name="paymentDate"
+              {...params}
+              InputLabelProps={{ shrink: true }}
+            />
+          )}
+        />
+      </LocalizationProvider>
 
       <RHFTextField
         name="comments"
@@ -381,28 +382,6 @@ export default function PaymentsNewForm({
           ))}
         </RHFSelect>
 
-        {/* <RHFSelect
-      name="cashType"
-      label="Валюта"
-      InputLabelProps={{ shrink: true }}
-      sx={{
-        maxWidth: { md: 160 },
-      }}
-    >
-      {CASH_TYPES_OPTIONS.map((el, idx) => (
-        <MenuItem key={el.idx} value={el.value}>
-          <Stack
-            width="100%"
-            direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <Typography variant="caption"> {el.label}</Typography>
-          </Stack>
-        </MenuItem>
-      ))}
-    </RHFSelect> */}
-
         <RHFCurrencyField
           name="paymentAmount"
           label="Сумма оплаты"
@@ -418,6 +397,22 @@ export default function PaymentsNewForm({
             ),
           }}
         />
+
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <DatePicker
+            label="Дата оплаты"
+            value={methods.watch('paymentDate')}
+            onChange={(newValue) => methods.setValue('paymentDate', newValue, { shouldValidate: true })}
+            maxDate={new Date()}
+            renderInput={(params) => (
+              <RHFTextField
+                name="paymentDate"
+                {...params}
+                InputLabelProps={{ shrink: true }}
+              />
+            )}
+          />
+        </LocalizationProvider>
 
         <RHFTextField
           name="comments"

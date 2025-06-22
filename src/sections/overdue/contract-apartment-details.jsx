@@ -305,26 +305,28 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
               </Box>
             </Stack>
           )}
-          <Stack
-            onClick={exportToExcel}
-            component={ButtonBase}
-            loading={loadingExcelFile}
-            alignItems="center"
-            width={100}
-            height={50}
-            sx={{
-              background: loadingExcelFile ? '#01a76f33' : '#01a76f',
-              py: 1,
-              px: 1,
-              borderRadius: 0.5,
-            }}
-            direction="row"
-          >
-            <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
-            <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-              Скачать
-            </Box>
-          </Stack>
+          {['1', '2'].includes(user?.role) && (
+            <Stack
+              onClick={exportToExcel}
+              component={ButtonBase}
+              loading={loadingExcelFile}
+              alignItems="center"
+              width={100}
+              height={50}
+              sx={{
+                background: loadingExcelFile ? '#01a76f33' : '#01a76f',
+                py: 1,
+                px: 1,
+                borderRadius: 0.5,
+              }}
+              direction="row"
+            >
+              <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
+              <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
+                Скачать
+              </Box>
+            </Stack>
+          )}
         </Stack>
       </Stack>
     </Card>

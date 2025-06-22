@@ -58,6 +58,9 @@ export default function ContractPreivewFullscreenDialog({
   const [visibleAppBar, setVisibleAppBar] = useState(true);
   const [marginTop, setMarginTop] = useState(50);
 
+  console.log(data);
+
+
   const handleCreate = () => {
     if (data.paymentType === 'Наличными') {
       const newData = {

@@ -308,7 +308,6 @@
 //   return inputData;
 // }
 
-
 import PropTypes from 'prop-types';
 import { saveAs } from 'file-saver';
 import { enqueueSnackbar } from 'notistack';
@@ -317,14 +316,10 @@ import { useState } from 'react';
 import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Dialog from '@mui/material/Dialog';
-import {
-  Button,
-  DialogTitle,
-  DialogActions,
-  DialogContent,
-} from '@mui/material';
+import { Button, DialogTitle, DialogActions, DialogContent } from '@mui/material';
 
 import axios from 'src/utils/axios';
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
@@ -335,6 +330,7 @@ export default function ContractsExcelDialog({
   onClose,
 }) {
   const [loadingExcelFile, setLoadingExcelFile] = useState(false);
+  const { user } = useAuthContext();
 
   const handleClose = () => {
     setLoadingExcelFile(false);
@@ -380,14 +376,11 @@ export default function ContractsExcelDialog({
         <Button color="inherit" variant="outlined" onClick={handleClose}>
           Отменить
         </Button>
-
-        <LoadingButton
-          variant="contained"
-          loading={loadingExcelFile}
-          onClick={handleDownload}
-        >
-          Скачать
-        </LoadingButton>
+        {['1', '2'].includes(user?.role) && (
+          <LoadingButton variant="contained" loading={loadingExcelFile} onClick={handleDownload}>
+            Скачать
+          </LoadingButton>
+        )}
       </DialogActions>
     </Dialog>
   );

@@ -23,6 +23,7 @@ export default function ContractNewEditDetailsAuto() {
 
   const values = watch();
 
+
   const totalOnRow = values.mounthPayList.map((item) => +item.price);
 
   const subTotal = sum(totalOnRow);

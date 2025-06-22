@@ -146,7 +146,18 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
 
   const convertNumberToUzText = (number) => {
     const ones = ['', 'бир', 'икки', 'уч', 'тўрт', 'беш', 'олти', 'етти', 'саккиз', 'тўққиз'];
-    const tens = ['', 'ўн', 'йигирма', 'ўттиз', 'қирқ', 'эллик', 'олтмиш', 'етмиш', 'саксон', 'тўқсон'];
+    const tens = [
+      '',
+      'ўн',
+      'йигирма',
+      'ўттиз',
+      'қирқ',
+      'эллик',
+      'олтмиш',
+      'етмиш',
+      'саксон',
+      'тўқсон',
+    ];
     const hundreds = [
       '',
       'бир юз',
@@ -191,8 +202,16 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
         if (remainder >= 10 && remainder <= 19) {
           // 10-19 oralig'i uchun maxsus holat
           const teenWords = [
-            'ўн', 'ўн бир', 'ўн икки', 'ўн уч', 'ўн тўрт',
-            'ўн беш', 'ўн олти', 'ўн етти', 'ўн саккиз', 'ўн тўққиз'
+            'ўн',
+            'ўн бир',
+            'ўн икки',
+            'ўн уч',
+            'ўн тўрт',
+            'ўн беш',
+            'ўн олти',
+            'ўн етти',
+            'ўн саккиз',
+            'ўн тўққиз',
           ];
           chunkParts.push(teenWords[remainder - 10]);
         } else {
@@ -222,7 +241,7 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
     });
 
     return parts.join(' ').replace(/\s+/g, ' ').trim();
-};
+  };
 
   window.moment = moment;
   window.dayjs = dayjs;
@@ -592,7 +611,7 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
           ? moment(mp?.date, 'DD-MM-YYYY', true).isValid()
             ? moment(mp?.date, 'DD-MM-YYYY').format('DD.MM.YYYY г.')
             : moment(mp?.date).format('DD.MM.YYYY г.')
-          : data?.monthlyPaymentAuto === 'Автоматически'
+          : data?.monthlyPaymentAuto === 'Автоматически' || data?.monthlyPaymentAuto === 'Ручное заполнение 2'
             ? moment(mp?.date).format('DD.MM.YYYY г.')
             : moment(mp?.date, 'DD-MM-YYYY').format('DD.MM.YYYY г.'),
         price: new Intl.NumberFormat('de-DE').format(mp?.price),
@@ -866,12 +885,13 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
                     <ContractNewEditDetails />
                   </>
                 )}
-                {methods.watch('paymentType') === 'В рассрочку' &&
+              {methods.watch('paymentType') === 'В рассрочку' &&
                 methods.watch('monthlyPaymentAuto') === 'Ручное заполнение 2' && (
                   <>
                     <ContractNewEditStatusDate />
 
                     <ContractNewEditDetailsAuto2 />
+                  
                   </>
                 )}
             </Grid>

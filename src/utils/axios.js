@@ -209,6 +209,7 @@ export const endpoints = {
     update: 'api/v1/contract/update',
     updateWithPlan: 'api/v1/contractplan/update',
     delete: 'api/v1/contract/delete',
+    terminate: 'api/v1/contract/terminated',
     uploadFile: 'api/v1/contract/file',
     confirm: 'api/v1/contract/finish',
   },
@@ -250,7 +251,7 @@ export const endpoints = {
   bartercontract: {
     list: '/api/v1/bartercontract/payments',
     info: 'api/v1/bartercontract/info',
-    pay: '/api/v1/bartercontract/pay',
+    pay: '/api/v1/contract/pay',
     pay2: '/api/v1/kassa/create',
     delete: '/api/v1/kassa/delete',
     payKassaSklad: '/api/v1/kassasklad/pay',

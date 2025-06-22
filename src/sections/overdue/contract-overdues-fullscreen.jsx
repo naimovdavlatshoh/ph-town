@@ -38,7 +38,7 @@ import {
   TableHeadCustom,
   TablePaginationCustom,
 } from 'src/components/table';
-
+import { useAuthContext } from 'src/auth/hooks';
 import OverdueTableRow from './overdue-table-row';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@/build/pdf.worker.js`;
@@ -59,6 +59,7 @@ const TABLE_HEAD = [
 ];
 
 export default function ContractOverduesFullscreen({ open, handleClose }) {
+  const { user } = useAuthContext();
   const router = useRouter();
   const [loadingExcelFile, setLoadingExcelFile] = useState(false);
   const [html, setHtml] = useState('');
@@ -122,26 +123,29 @@ export default function ContractOverduesFullscreen({ open, handleClose }) {
             Список просроченных оплат
           </Typography>
           <Stack direction="row" gap={1}>
-            <Stack
-              onClick={onExportFile}
-              component={ButtonBase}
-              loading={loadingExcelFile}
-              alignItems="center"
-              width={100}
-              height={40}
-              sx={{
-                background: '#01a76f',
-                py: 1,
-                px: 1,
-                borderRadius: 1,
-              }}
-              direction="row"
-            >
-              <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
-              <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                Скачать
-              </Box>
-            </Stack>
+            {['1', '2'].includes(user?.role) && (
+              <Stack
+                onClick={onExportFile}
+                component={ButtonBase}
+                loading={loadingExcelFile}
+                alignItems="center"
+                width={100}
+                height={40}
+                sx={{
+                  background: '#01a76f',
+                  py: 1,
+                  px: 1,
+                  borderRadius: 1,
+                }}
+                direction="row"
+              >
+                <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
+                <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
+                  Скачать
+                </Box>
+              </Stack>
+            )}
+
             <LoadingButton autoFocus color="inherit" onClick={handleClose}>
               Закрыть
             </LoadingButton>

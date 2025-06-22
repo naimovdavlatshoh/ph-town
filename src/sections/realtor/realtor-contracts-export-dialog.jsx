@@ -23,6 +23,7 @@ import { useGetRealtors, useSearchRealtors } from 'src/api/realtor';
 import { RHFAutocomplete } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';
 import FormProvider from 'src/components/hook-form/form-provider';
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
@@ -45,6 +46,7 @@ export default function RealtorContractsExcelDialog({
   selected,
   onSelect,
 }) {
+  const { user } = useAuthContext();
   const [exportRowsCount, setExportRowsCount] = useState(0);
   const [loadingCheckRowsData, setLoadingCheckRowsData] = useState(false);
   const [loadingExcelFile, setLoadingExcelFile] = useState(false);
@@ -270,15 +272,16 @@ export default function RealtorContractsExcelDialog({
           <Button color="inherit" variant="outlined" onClick={handleClose}>
             Отменить
           </Button>
-
-          <LoadingButton
-            type="submit"
-            variant="contained"
-            loading={loadingExcelFile}
-            disabled={!(methods.watch().endDate && methods.watch().startDate)}
-          >
-            Скачать
-          </LoadingButton>
+          {['1', '2'].includes(user?.role) && (
+            <LoadingButton
+              type="submit"
+              variant="contained"
+              loading={loadingExcelFile}
+              disabled={!(methods.watch().endDate && methods.watch().startDate)}
+            >
+              Скачать
+            </LoadingButton>
+          )}
         </DialogActions>
       </FormProvider>
     </Dialog>

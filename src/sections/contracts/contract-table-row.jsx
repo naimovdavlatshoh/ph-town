@@ -18,7 +18,7 @@ import { useAuthContext } from 'src/auth/hooks';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
-
+import axios from 'axios';
 import UserQuickEditForm from './user-quick-edit-form';
 import { RenderCellCreatedAt } from '../checkerboard/client-table-row';
 
@@ -56,6 +56,7 @@ export default function ContractTableRow({
   onEditRow,
   onSelectRow,
   onDeleteRow,
+  onTerminateRow,
   onPreviewDocument,
 }) {
   const {
@@ -118,12 +119,28 @@ export default function ContractTableRow({
       if (!response.ok) {
         throw new Error('Failed to update SMS setting');
       }
-
-     
     } catch (error) {
       console.error('Failed to update SMS setting:', error);
     }
   };
+
+  // const terminateContract = async (id) => {
+  //   const token = sessionStorage.getItem('accessToken');
+  //   try {
+  //     const response = await axios.delete('https://testapi.ph.town/api/v1/contract/terminated', {
+  //       data: { contract_id: id },
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  //     console.log('Success:', response.data);
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Error terminating contract:', error);
+  //     throw error;
+  //   }
+  // };
 
   return (
     <>
@@ -160,7 +177,7 @@ export default function ContractTableRow({
             color={getStatusColor(is_active)}
             sx={isDeleted ? { color: 'text.disabled' } : {}}
           >
-            {getStatusLabel(is_active)}
+            {getStatusLabel(contract_status)}
           </Label>
         </TableCell>
 
@@ -248,6 +265,18 @@ export default function ContractTableRow({
             Удалить
           </MenuItem>
         )}
+        {is_active !== '0' && ['1', '2'].includes(user?.role) && (
+          <MenuItem
+            onClick={() => {
+              onTerminateRow(contract_id);
+              popover.onClose();
+            }}
+            sx={{ color: 'error.main' }}
+          >
+            <Iconify icon="mdi:close-circle-outline" />
+            Расторгнут
+          </MenuItem>
+        )}
 
         {is_active === '1' && (
           <MenuItem component={RouterLink} href={paths.dashboard.contracts.edit(contract_id)}>
@@ -262,6 +291,7 @@ export default function ContractTableRow({
 
 ContractTableRow.propTypes = {
   onDeleteRow: PropTypes.func,
+  onTerminateRow: PropTypes.func,
   onEditRow: PropTypes.func,
   onPreviewDocument: PropTypes.func,
   onSelectRow: PropTypes.func,

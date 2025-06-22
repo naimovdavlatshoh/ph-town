@@ -24,8 +24,9 @@ import { useGetContracts } from 'src/api/contract';
 
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
-
+import { useAuthContext } from 'src/auth/hooks';
 import ContractPreivewFullscreenDialog from './contract-preview-fullscreen-dialog';
+
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -79,6 +80,7 @@ export default function ContractToolbar({
   contract,
 }) {
   const [file, setFile] = useState();
+  const {user} = useAuthContext()
   const [loadingUploadFile, setLoadingUploadFile] = useState(false);
 
   const router = useRouter();
@@ -415,15 +417,17 @@ export default function ContractToolbar({
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Скачать файл">
-            <IconButton onClick={() => onDownLoadFile()}>
-              {downloadingContract ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                <Iconify icon="eva:cloud-download-fill" />
-              )}
-            </IconButton>
-          </Tooltip>
+          {['1', '2'].includes(user?.role) && (
+            <Tooltip title="Скачать файл">
+              <IconButton onClick={() => onDownLoadFile()}>
+                {downloadingContract ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  <Iconify icon="eva:cloud-download-fill" />
+                )}
+              </IconButton>
+            </Tooltip>
+          )}
 
           <Tooltip title="Печать">
             <IconButton onClick={printer.onTrue}>

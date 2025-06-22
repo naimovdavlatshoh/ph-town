@@ -25,7 +25,7 @@ import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 
 import RealtorContractsExcelDialog from 'src/sections/realtor/realtor-contracts-export-dialog';
-
+import { useAuthContext } from 'src/auth/hooks';
 import RealtorsListView from './realtors-list-view';
 import RealtorContractsListView from './realtor-contracts-list-view';
 
@@ -52,6 +52,7 @@ const defaultFilters = {
 // ----------------------------------------------------------------------
 
 export default function RealtorListView() {
+  const { user } = useAuthContext();
   const table = useTable();
 
   const settings = useSettingsContext();
@@ -101,27 +102,31 @@ export default function RealtorListView() {
           heading="Риэлторы"
           links={[{ name: 'Dashboard', href: paths.dashboard.root }, { name: 'Риэлторы' }]}
           action={
-            <Stack
-              onClick={exportToExcel.onTrue}
-              component={ButtonBase}
-              loading={loadingExcelFile}
-              alignItems="center"
-              width={100}
-              height={50}
-              sx={{
-                // background: false ? '#01a76f33' : '#01a76f',
-                background: '#01a76f',
-                py: 1,
-                px: 1,
-                borderRadius: 0.5,
-              }}
-              direction="row"
-            >
-              <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
-              <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                Скачать
-              </Box>
-            </Stack>
+            <>
+              {['1', '2'].includes(user?.role) && (
+                <Stack
+                  onClick={exportToExcel.onTrue}
+                  component={ButtonBase}
+                  loading={loadingExcelFile}
+                  alignItems="center"
+                  width={100}
+                  height={50}
+                  sx={{
+                    // background: false ? '#01a76f33' : '#01a76f',
+                    background: '#01a76f',
+                    py: 1,
+                    px: 1,
+                    borderRadius: 0.5,
+                  }}
+                  direction="row"
+                >
+                  <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
+                  <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
+                    Скачать
+                  </Box>
+                </Stack>
+              )}
+            </>
           }
           // action={
           //   <Stack gap={1} direction="row">

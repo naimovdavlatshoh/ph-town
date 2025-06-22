@@ -39,8 +39,6 @@ export default function ContractNewEditDetailsAuto2() {
 
   const subTotal = sum(totalOnRow);
 
-  console.log(values.mounthPayList);
-
   const handleEditStart = (index, currentPrice) => {
     setEditingIndex(index);
     setEditValue(currentPrice.toString());
@@ -72,13 +70,21 @@ export default function ContractNewEditDetailsAuto2() {
 
       // Map backend response to mounthPayList format
       const mounthPayList = result.data?.payment_day?.map((date, idx) => ({
-        date: moment(date, 'DD-MM-YYYY').toDate(),
+        date: moment(result.data?.payment_day[idx], 'DD-MM-YYYY'),
         price: result.data?.monthly_fee[idx],
-        status: result.data?.status[idx] || 0, // Use status from backend
+        status: result.data?.status[idx] || 0,
       }));
 
       setValue('mounthPayList', mounthPayList);
       setValue('monthly_fee', result.data.monthly_fee);
+
+      //  const mounthPayList = result.data?.payment_day?.map((item, idx) => ({
+      //           date: moment(result.data?.payment_day[idx], 'DD-MM-YYYY'),
+      //           price: result.data?.monthly_fee[idx],
+      //         }));
+
+      //         setValue('mounthPayList', mounthPayList);
+      //         setValue('monthly_fee', result.data.monthly_fee);
     } catch (error) {
       console.error(error);
     } finally {
