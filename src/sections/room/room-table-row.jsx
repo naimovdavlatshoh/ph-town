@@ -17,7 +17,8 @@ import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import { usePopover } from 'src/components/custom-popover';
 import { ConfirmDialog } from 'src/components/custom-dialog';
-
+import { Switch } from '@mui/material';
+import { CUSTOM_BASE_URL } from 'src/utils/custom-base-url';
 import RoomImagesDialog from './room-imags-dialog';
 import { RenderCellPrice } from '../product/product-table-row';
 
@@ -46,6 +47,7 @@ export default function RoomTableRow({
 
   const [selectedLayoutSrc, sestSelectedLayoutSrc] = useState();
   const [selectedId, setSelectedId] = useState();
+  const [localStockStatus, setLocalStockStatus] = useState(stock_status);
 
   const confirm = useBoolean();
 
@@ -66,6 +68,35 @@ export default function RoomTableRow({
     },
     []
   );
+
+  const updateApartmentStockStatus = async () => {
+    const token = sessionStorage.getItem('accessToken');
+    try {
+      const response = await fetch(`${CUSTOM_BASE_URL}/api/v1/apartment/stockstatus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ apartment_id }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Stock status update success:', data);
+
+      setLocalStockStatus((prev) => (prev === '5' ? '1' : '5'));
+
+      return data; // return mavjud
+    } catch (error) {
+      // console.error('Xatolik yuz berdi:', error);
+
+      return null; // ❗️ catch ichida ham return bo‘lishi kerak
+    }
+  };
 
   return (
     <>
@@ -111,17 +142,19 @@ export default function RoomTableRow({
           <Label
             variant="soft"
             color={
-              (stock_status === '1' && 'success') ||
-              (stock_status === '2' && 'warning') ||
-              (stock_status === '3' && 'error') ||
-              (stock_status === '4' && 'info') ||
+              (localStockStatus === '1' && 'success') ||
+              (localStockStatus === '2' && 'warning') ||
+              (localStockStatus === '3' && 'error') ||
+              (localStockStatus === '4' && 'info') ||
+              (localStockStatus === '5' && 'default') ||
               'default'
             }
           >
-            {stock_status === '1' && 'Свободна'}
-            {stock_status === '2' && 'Бронирована'}
-            {stock_status === '3' && 'Продана'}
-            {stock_status === '4' && 'Временно забронирована'}
+            {localStockStatus === '1' && 'Свободна'}
+            {localStockStatus === '2' && 'Бронирована'}
+            {localStockStatus === '3' && 'Продана'}
+            {localStockStatus === '4' && 'Временно забронирована'}
+            {localStockStatus === '5' && 'Отключено'}
           </Label>
         </TableCell>
 
@@ -156,6 +189,13 @@ export default function RoomTableRow({
               <Iconify color="#02b9da" icon="mingcute:layout-11-fill" />
             </IconButton>
           </Tooltip>
+
+          <Switch
+            disabled={!['1', '5'].includes(stock_status)}
+            defaultChecked={stock_status !== '5'}
+            onChange={() => updateApartmentStockStatus()}
+          />
+
           {['1', '2'].includes(user?.role) && (
             <>
               {' '}

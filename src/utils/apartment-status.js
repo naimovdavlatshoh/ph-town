@@ -12,6 +12,8 @@ export default function getStatusColor(statusId) {
 
     case '3':
       return '#ff5722';
+    case '5':
+      return 'gray';
 
     default:
       '#fff';
@@ -19,7 +21,7 @@ export default function getStatusColor(statusId) {
 }
 
 export function getDisabledStatusColor(statusId) {
-  
+
 
   switch (statusId) {
     case '1':

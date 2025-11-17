@@ -58,9 +58,6 @@ export default function ContractPreivewFullscreenDialog({
   const [visibleAppBar, setVisibleAppBar] = useState(true);
   const [marginTop, setMarginTop] = useState(50);
 
-  console.log(data);
-
-
   const handleCreate = () => {
     if (data.paymentType === 'Наличными') {
       const newData = {
@@ -75,13 +72,19 @@ export default function ContractPreivewFullscreenDialog({
         initial_payment: parseFloat(data?.initialPayment?.replace(/,/g, '')),
         comments: data?.comments,
         is_barter: data.is_barter ? 1 : 0,
+        contract_cash_type: data?.contract_cash_type === 'SUM' ? 1 : 0,
+        contract_exchange_rate: data?.contract_exchange_rate
+          ? parseFloat(
+              data?.contract_exchange_rate?.replace(/,/g, '') || data?.contract_exchange_rate
+            )
+          : null,
       };
 
       create(newData, () => {
         onClose();
         router.push(paths.dashboard.contracts.root);
       });
-    } else {
+    } else if (data.paymentType === 'В рассрочку') {
       const newData = {
         created_at: moment(data?.contract_date).valueOf(),
         date_type: data?.monthlyPaymentAuto === 'Автоматически' ? 1 : 2,
@@ -94,19 +97,23 @@ export default function ContractPreivewFullscreenDialog({
         total_price: data?.totalAmount,
         initial_payment: parseFloat(data?.initialPayment?.replace(/,/g, '')),
         monthly_fee: data?.monthly_fee,
-        payment_day: data?.mounthPayList?.map((mp) =>
-          data?.monthlyPaymentAuto === 'Автоматически'
-            ? moment(mp.date).format('DD-MM-YYYY')
-            : mp.date
-        ),
+        payment_day: data?.mounthPayList?.map((mp) => moment(mp.date).format('DD-MM-YYYY')),
         comments: data?.comments,
         is_barter: data.is_barter ? 1 : 0,
+        contract_cash_type: data?.contract_cash_type === 'SUM' ? 1 : 0,
+        contract_exchange_rate: data?.contract_exchange_rate
+          ? parseFloat(
+              data?.contract_exchange_rate?.replace(/,/g, '') || data?.contract_exchange_rate
+            )
+          : null,
       };
 
       createWithPlan(newData, () => {
         onClose();
         router.push(paths.dashboard.contracts.root);
       });
+    } else {
+      console.warn('Nomaʼlum paymentType:', data.paymentType);
     }
   };
 
@@ -125,6 +132,12 @@ export default function ContractPreivewFullscreenDialog({
         initial_payment: parseFloat(data?.initialPayment?.replace(/,/g, '')),
         comments: data?.comments,
         is_barter: data.is_barter ? 1 : 0,
+        contract_cash_type: data?.contract_cash_type === 'SUM' ? 1 : 0,
+        contract_exchange_rate: data?.contract_exchange_rate
+          ? parseFloat(
+              data?.contract_exchange_rate?.replace(/,/g, '') || data?.contract_exchange_rate
+            )
+          : null,
       };
 
       update(newData, () => {
@@ -152,12 +165,18 @@ export default function ContractPreivewFullscreenDialog({
         ),
         comments: data?.comments,
         is_barter: data.is_barter ? 1 : 0,
+        contract_cash_type: data?.contract_cash_type === 'SUM' ? 1 : 0,
+        contract_exchange_rate: data?.contract_exchange_rate
+          ? parseFloat(
+              data?.contract_exchange_rate?.replace(/,/g, '') || data?.contract_exchange_rate
+            )
+          : null,
       };
 
-      // updateWithPlan(newData, () => {
-      //   onClose();
-      //   router.push(paths.dashboard.contracts.root);
-      // });
+      updateWithPlan(newData, () => {
+        onClose();
+        router.push(paths.dashboard.contracts.root);
+      });
     }
   };
 

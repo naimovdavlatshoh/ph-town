@@ -122,7 +122,6 @@ export default function ContractListView() {
   const { page: pageNum } = useParams();
   const navigate = useNavigate();
 
-
   const [page, setPage] = useState(0);
 
   const { enqueueSnackbar } = useSnackbar();
@@ -139,13 +138,114 @@ export default function ContractListView() {
   const previewDocument = useBoolean();
   const overduesFullscreen = useBoolean();
 
-  const onOpenDeleteModal = (id) => {
+  const onOpenDeleteModal = (id, type = 'delete') => {
     setSelectedId(id);
+    setDialogType(type);
     confirm.onTrue();
+  };
+
+  const convertNumberToUzText = (number) => {
+    const ones = ['', 'бир', 'икки', 'уч', 'тўрт', 'беш', 'олти', 'етти', 'саккиз', 'тўққиз'];
+    const tens = [
+      '',
+      'ўн',
+      'йигирма',
+      'ўттиз',
+      'қирқ',
+      'эллик',
+      'олтмиш',
+      'етмиш',
+      'саксон',
+      'тўқсон',
+    ];
+    const hundreds = [
+      '',
+      'бир юз',
+      'икки юз',
+      'уч юз',
+      'тўрт юз',
+      'беш юз',
+      'олти юз',
+      'етти юз',
+      'саккиз юз',
+      'тўққиз юз',
+    ];
+
+    if (number === 0) return 'нол';
+    if (number < 0) return `манфий ${convertNumberToUzText(-number)}`;
+
+    const parts = [];
+
+    const scales = [
+      { value: 1e9, name: 'миллиард' },
+      { value: 1e6, name: 'миллион' },
+      { value: 1e3, name: 'минг' },
+      { value: 1, name: '' },
+    ];
+
+    scales.forEach((scale) => {
+      const chunk = Math.floor(number / scale.value);
+      number %= scale.value;
+
+      if (chunk !== 0) {
+        const h = Math.floor(chunk / 100);
+        const remainder = chunk % 100;
+        const d = Math.floor(remainder / 10);
+        const o = remainder % 10;
+
+        const chunkParts = [];
+
+        // Yuzliklar
+        if (h) chunkParts.push(hundreds[h]);
+
+        // O'nliklar va birliklar
+        if (remainder >= 10 && remainder <= 19) {
+          // 10-19 oralig'i uchun maxsus holat
+          const teenWords = [
+            'ўн',
+            'ўн бир',
+            'ўн икки',
+            'ўн уч',
+            'ўн тўрт',
+            'ўн беш',
+            'ўн олти',
+            'ўн етти',
+            'ўн саккиз',
+            'ўн тўққиз',
+          ];
+          chunkParts.push(teenWords[remainder - 10]);
+        } else {
+          // 20 va undan yuqori
+          if (d >= 2) {
+            chunkParts.push(tens[d]);
+          }
+          if (o) {
+            chunkParts.push(ones[o]);
+          }
+        }
+
+        // Scale name qo'shish
+        if (scale.name) {
+          // "минг" uchun maxsus holat - agar chunk 1 bo'lsa "бир"ni chiqarib tashlaymiz
+          if (scale.name === 'минг' && chunk === 1) {
+            parts.push('минг');
+          } else {
+            chunkParts.push(scale.name);
+            parts.push(chunkParts.join(' '));
+          }
+        } else {
+          // Bu oxirgi qism (birliklar)
+          parts.push(chunkParts.join(' '));
+        }
+      }
+    });
+
+    return parts.join(' ').replace(/\s+/g, ' ').trim();
   };
 
   const onCloseDeleteModal = () => {
     setSelectedId(null);
+    setDialogType(null);
     confirm.onFalse();
   };
 
@@ -176,6 +276,7 @@ export default function ContractListView() {
 
   const debounceClient = useDebounce(filters.client, 3);
   const { searchResults, searchResultsLoading } = useSearchClientsFromContract(debounceClient);
+  const [dialogType, setDialogType] = useState(null); // 'delete' | 'terminate' | null
 
   useEffect(() => {
     setTableData(contracts);
@@ -318,14 +419,15 @@ export default function ContractListView() {
       }),
       apartment_area: new Intl.NumberFormat('de-DE').format(data.apartment_area),
       total_price: new Intl.NumberFormat('de-DE').format(data?.total_price),
-      total_price_text: convertNumberToWordsRu(data?.total_price, {
-        showNumberParts: {
-          fractional: false,
-        },
-        showCurrency: {
-          integer: false,
-        },
-      }),
+      // total_price_text: convertNumberToWordsRu(data?.total_price, {
+      //   showNumberParts: {
+      //     fractional: false,
+      //   },
+      //   showCurrency: {
+      //     integer: false,
+      //   },
+      // }),
+      total_price_text: convertNumberToUzText(data?.total_price),
       remain_payment: new Intl.NumberFormat('de-DE').format(
         // eslint-disable-next-line no-unsafe-optional-chaining
         data?.total_price - data?.initial_payment
@@ -619,8 +721,8 @@ export default function ContractListView() {
                       row={row}
                       onSelectRow={() => {}}
                       onPreviewDocument={() => onPreviewDocument(row.contract_id)}
-                      onDeleteRow={(id) => onOpenDeleteModal(id)}
-                      onTerminateRow={(id) => onOpenDeleteModal(id)}
+                      onDeleteRow={(id) => onOpenDeleteModal(id, 'delete')}
+                      onTerminateRow={(id) => onOpenDeleteModal(id, 'terminate')}
                       onEditRow={() => {}}
                     />
                   ))}
@@ -646,28 +748,33 @@ export default function ContractListView() {
           />
         </Card>
       </Container>
-      <ConfirmDialog
-        open={confirm.value}
-        onClose={onCloseDeleteModal}
-        title="Удаление"
-        content="Вы уверены что хотите удалить контракт?"
-        action={
-          <Button variant="contained" color="error" onClick={onDelete}>
-            Удалить
-          </Button>
-        }
-      />
-      <ConfirmDialog
-        open={confirm.value}
-        onClose={onCloseDeleteModal}
-        title="Расторжение контракта"
-        content="Вы уверены, что хотите расторгнуть этот контракт?"
-        action={
-          <Button variant="contained" color="error" onClick={onTerminate}>
-            Расторгнуть
-          </Button>
-        }
-      />
+      {dialogType === 'delete' && (
+        <ConfirmDialog
+          open={confirm.value}
+          onClose={onCloseDeleteModal}
+          title="Удаление контракта"
+          content="Вы уверены, что хотите удалить контракт?"
+          action={
+            <Button variant="contained" color="error" onClick={onDelete}>
+              Удалить
+            </Button>
+          }
+        />
+      )}
+
+      {dialogType === 'terminate' && (
+        <ConfirmDialog
+          open={confirm.value}
+          onClose={onCloseDeleteModal}
+          title="Расторжение контракта"
+          content="Вы уверены, что хотите расторгнуть этот контракт?"
+          action={
+            <Button variant="contained" color="error" onClick={onTerminate}>
+              Расторгнуть
+            </Button>
+          }
+        />
+      )}
 
       {previewDocument.value && (
         <ContractPreivewFullscreenDialog

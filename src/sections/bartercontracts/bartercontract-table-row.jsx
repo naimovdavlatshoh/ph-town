@@ -87,9 +87,10 @@ export default function BarterContractTableRow({
     contract_number,
     type_of_expense,
     invoice_number,
+    is_terminated,
   } = row;
 
-
+  console.log(is_terminated);
 
   const [openComment, setOpenComment] = useState(false);
   const [data, setData] = useState([]);
@@ -233,6 +234,11 @@ export default function BarterContractTableRow({
                 (payment_method === '4' && 'Банк') ||
                 'default'}
             </Label>
+            {is_terminated === '1' && (
+              <Label variant="soft" color="error" sx={{ ml: 1 }}>
+                Расторгнут
+              </Label>
+            )}
             {type_of_expense === '1' && (
               <Label variant="soft" color="default">
                 Взнос

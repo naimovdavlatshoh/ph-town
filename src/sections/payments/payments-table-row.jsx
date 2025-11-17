@@ -83,16 +83,43 @@ export default function PaymentsTableRow({
     kassa_id,
     operator_name,
     payment_amount,
+    payment_amount_usd,
+    contract_cash_type,
+    contract_exchange_rate,
+    payment_exchange_rate,
     payment_method,
     contract_number,
     type_of_expense,
     invoice_number,
+    is_terminated,
   } = row;
 
-  console.log('row', row);
+  const contractTypeColor = (() => {
+    if (contract_cash_type === '1') {
+      return 'info';
+    }
+    if (contract_cash_type === '0') {
+      return 'warning';
+    }
+    return 'default';
+  })();
+
+  const contractTypeLabel = (() => {
+    if (contract_cash_type === '1') {
+      return 'Сумовой';
+    }
+    if (contract_cash_type === '0') {
+      return 'Долларовый';
+    }
+    return contract_cash_type;
+  })();
 
   const [openComment, setOpenComment] = useState(false);
   const [data, setData] = useState([]);
+
+  console.log(created_at);
+
+  // const is_terminated = '1';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -214,6 +241,24 @@ export default function PaymentsTableRow({
         </TableCell>
 
         <TableCell sx={{ color: makeColor(payment_amount) }}>{fCurrency(payment_amount)}</TableCell>
+        <TableCell sx={{ color: makeColor(payment_amount_usd) }}>
+          {payment_amount_usd ? fCurrency(payment_amount_usd) : '-'}
+        </TableCell>
+        <TableCell>
+          {contract_cash_type !== undefined && contract_cash_type !== null ? (
+            <Label variant="soft" color={contractTypeColor}>
+              {contractTypeLabel}
+            </Label>
+          ) : (
+            '-'
+          )}
+        </TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+          {contract_exchange_rate ? fCurrency(contract_exchange_rate) : '-'}
+        </TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+          {payment_exchange_rate ? fCurrency(payment_exchange_rate) : '-'}
+        </TableCell>
 
         <TableCell>
           <Stack direction="row" gap={1}>
@@ -233,6 +278,11 @@ export default function PaymentsTableRow({
                 (payment_method === '4' && 'Банк') ||
                 'default'}
             </Label>
+            {is_terminated === '1' && (
+              <Label variant="soft" color="error" sx={{ ml: 1 }}>
+                Расторгнут
+              </Label>
+            )}
             {type_of_expense === '1' && (
               <Label variant="soft" color="default">
                 Взнос
@@ -242,16 +292,20 @@ export default function PaymentsTableRow({
         </TableCell>
         <TableCell align="center">{operator_name}</TableCell>
         <TableCell>
-          <ListItemText
-            primary={fDate(created_at)}
-            secondary={fTime(created_at)}
-            primaryTypographyProps={{ typography: 'body2', noWrap: true }}
-            secondaryTypographyProps={{
-              mt: 0.5,
-              component: 'span',
-              typography: 'caption',
-            }}
-          />
+          {created_at ? (
+            <ListItemText
+              primary={fDate(created_at)}
+              secondary={fTime(created_at)}
+              primaryTypographyProps={{ typography: 'body2', noWrap: true }}
+              secondaryTypographyProps={{
+                mt: 0.5,
+                component: 'span',
+                typography: 'caption',
+              }}
+            />
+          ) : (
+            ''
+          )}
         </TableCell>
 
         <TableCell align="right" sx={{ px: 1 }}>

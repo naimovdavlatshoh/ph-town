@@ -59,8 +59,12 @@ const TABLE_HEAD = [
   { id: 'invoice_number', label: 'Инвойс' },
   { id: 'contractNumber', label: 'Договор' },
   { id: 'client', label: 'Клиент' },
-  { id: 'cashType', label: 'Комментарий' },
-  { id: 'price', label: 'Сумма' },
+  { id: 'comment', label: 'Комментарий' },
+  { id: 'payment_amount', label: 'Сумма (UZS)' },
+  { id: 'payment_amount_usd', label: 'Сумма (USD)' },
+  { id: 'contract_cash_type', label: 'Тип контракта' },
+  { id: 'contract_exchange_rate', label: 'Курс контракта' },
+  { id: 'payment_exchange_rate', label: 'Курс оплаты' },
   { id: 'payMethod', label: 'Метод оплаты' },
   { id: 'operator', label: 'Оператор', align: 'center' },
   { id: 'createDate', label: 'Дата оплаты' },
@@ -345,6 +349,8 @@ export default function PaymentsListView() {
     return shortDateLabel(startDay, endDay);
   };
 
+  console.log(user.role);
+
   return (
     <>
       <Container maxWidth={settings.themeStretch ? false : 'lx'}>
@@ -361,7 +367,7 @@ export default function PaymentsListView() {
           ]}
           action={
             <Stack direction="row" gap={1}>
-              {['1', '2'].includes(user?.role) && (
+              {['1'].includes(user?.role) && (
                 <Stack
                   onClick={exportToExcel.onTrue}
                   component={ButtonBase}
@@ -397,7 +403,7 @@ export default function PaymentsListView() {
             mb: { xs: 3, md: 5 },
           }}
         />
-        {['1', '2'].includes(user?.role) && (
+        {['1'].includes(user?.role) && (
           <Card
             sx={{
               mb: { xs: 3, md: 5 },
@@ -532,7 +538,7 @@ export default function PaymentsListView() {
             />
 
             <Scrollbar>
-              <Table size="small" sx={{ minWidth: 800 }} aria-label="a dense table">
+              <Table size="small" sx={{ minWidth: 1200 }} aria-label="a dense table">
                 <TableHeadCustom headLabel={TABLE_HEAD} />
 
                 <TableBody>
@@ -556,7 +562,7 @@ export default function PaymentsListView() {
           <TablePaginationCustom
             count={count}
             page={page}
-            rowsPerPage={10}
+            rowsPerPage={30}
             rowsPerPageOptions={[]}
             onPageChange={(_, nextPage) => navigate(`/dashboard/payments/${nextPage}`)}
             labelDisplayedRows={(paginationInfo) =>

@@ -60,9 +60,10 @@ import FormProvider from 'src/components/hook-form/form-provider';
 import RHFPINFLField from 'src/components/hook-form/rhf-pinfl-field';
 import FileThumbnail from 'src/components/file-thumbnail/file-thumbnail';
 import RHFCurrencyField from 'src/components/hook-form/rhf-currency-field';
-
+import { CUSTOM_BASE_URL } from 'src/utils/custom-base-url';
 import ReserveRoomDialog from './reserve-room-dialog';
 import styles from './checkerboard-room-details.module.css';
+
 
 // ----------------------------------------------------------------------
 
@@ -84,6 +85,8 @@ export default function CheckerboardRoomDetails({
   dereserve,
   ...other
 }) {
+  const stock_status = other.stock_status;
+
   const { currency } = useGetCurrency();
   const { apartment } = useGetApartmentInfo(roomId);
   const { images } = useGetApartmentImages(roomId);
@@ -201,7 +204,7 @@ export default function CheckerboardRoomDetails({
   useEffect(() => {
     const token = sessionStorage.getItem('accessToken'); // sessionStorage dan tokenni olish
 
-    fetch('https://testapi.ph.town/api/v1/realdate', {
+    fetch(`${CUSTOM_BASE_URL}/api/v1/realdate`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`, // tokenni headerga qo‘shish
@@ -479,7 +482,6 @@ export default function CheckerboardRoomDetails({
   );
 
   console.log(apartment);
-
 
   return (
     <>
@@ -1053,9 +1055,19 @@ export default function CheckerboardRoomDetails({
                     >
                       {`${renderClientName(apartment?.temp_reservation_info)}`}
                     </Link>{' '}
-                    забронировал помещение до <span style={{color:"red"}}>{apartment?.temp_reservation_info?.expire_date}</span> через
-                    оператора <span style={{color:"green"}}>{apartment?.temp_reservation_info?.operator}{' '}</span> <br />
-                    Комментарий : <span style={{color:"green"}}>{apartment?.temp_reservation_info?.comments}</span>
+                    забронировал помещение до{' '}
+                    <span style={{ color: 'red' }}>
+                      {apartment?.temp_reservation_info?.expire_date}
+                    </span>{' '}
+                    через оператора{' '}
+                    <span style={{ color: 'green' }}>
+                      {apartment?.temp_reservation_info?.operator}{' '}
+                    </span>{' '}
+                    <br />
+                    Комментарий :{' '}
+                    <span style={{ color: 'green' }}>
+                      {apartment?.temp_reservation_info?.comments}
+                    </span>
                     <Button
                       variant="text"
                       color="error"
@@ -1098,28 +1110,30 @@ export default function CheckerboardRoomDetails({
                 </Button>
               </Link>
 
-              <Stack sx={{ p: 2.5 }} className={styles.notPrint} direction="row" gap={2}>
-                <Button
-                  fullWidth
-                  color="info"
-                  variant="contained"
-                  startIcon={<Iconify icon="mingcute:time-fill" />}
-                  onClick={reserveModal.onTrue}
-                  sx={{ px: 4 }}
-                >
-                  Забронировать
-                </Button>{' '}
-                <Button
-                  fullWidth
-                  variant="soft"
-                  color="warning"
-                  startIcon={<Iconify icon="healthicons:i-documents-accepted-outline" />}
-                  component={RouterLink}
-                  href={paths.dashboard.contracts.new(apartment?.apartment_id)}
-                >
-                  Оформить
-                </Button>{' '}
-              </Stack>
+              {stock_status !== '5' && (
+                <Stack sx={{ p: 2.5 }} className={styles.notPrint} direction="row" gap={2}>
+                  <Button
+                    fullWidth
+                    color="info"
+                    variant="contained"
+                    startIcon={<Iconify icon="mingcute:time-fill" />}
+                    onClick={reserveModal.onTrue}
+                    sx={{ px: 4 }}
+                  >
+                    Забронировать
+                  </Button>{' '}
+                  <Button
+                    fullWidth
+                    variant="soft"
+                    color="warning"
+                    startIcon={<Iconify icon="healthicons:i-documents-accepted-outline" />}
+                    component={RouterLink}
+                    href={paths.dashboard.contracts.new(apartment?.apartment_id)}
+                  >
+                    Оформить
+                  </Button>
+                </Stack>
+              )}
             </>
           )}
           {apartment?.stock_status !== '3' && (

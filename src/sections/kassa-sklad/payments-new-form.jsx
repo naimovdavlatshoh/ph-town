@@ -223,12 +223,22 @@ export default function PaymentsNewForm({ open, onClose, data, pay }) {
       ))}
     </RHFSelect> */}
 
-            <RHFCurrencyField
+            {/* <RHFCurrencyField
               name="payment_method"
               label="Сумма оплаты"
               placeholder="0"
               decimalScale={0}
               InputLabelProps={{ shrink: true }}
+            /> */}
+            <RHFCurrencyField
+              name="payment_method"
+              label="Сумма оплаты"
+              placeholder="0"
+              decimalScale={2} // ✅ Endi ondalik sonlarga ruxsat beriladi (masalan, 100.25)
+              InputLabelProps={{ shrink: true }}
+              // InputProps={{
+              //   endAdornment: <InputAdornment position="start">UZS</InputAdornment>,
+              // }}
             />
 
             <RHFTextField

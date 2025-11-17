@@ -35,6 +35,15 @@ const renderClientName = (client) => {
   return '';
 };
 
+// 📌 Local timezone bo‘yicha YYYY-MM-DD formatda sanani olish funksiyasi
+const getFormattedLocalDate = (date) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = `${d.getMonth() + 1}`.padStart(2, '0');
+  const day = `${d.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function ReserveRoomDialog({ open, onClose, onReserve, apartmentId }) {
   const [loading, setLoading] = useState();
 
@@ -71,31 +80,19 @@ export default function ReserveRoomDialog({ open, onClose, onReserve, apartmentI
   const onSubmit = handleSubmit(async (data) => {
     setLoading(true);
     try {
-      // Format date to YYYY-MM-DD format
-      const formattedDate =
-        data.expire_date instanceof Date
-          ? data.expire_date.toISOString().split('T')[0]
-          : data.expire_date;
+      const formattedDate = getFormattedLocalDate(data.expire_date);
 
-      const temp = {
+      const payload = {
         apartment_id: apartmentId,
         client_id: data.client.client_id,
         comments: data.comments,
         expire_date: formattedDate,
       };
 
-      onReserve(
-        {
-          apartment_id: apartmentId,
-          client_id: data.client.client_id,
-          comments: data.comments,
-          expire_date: formattedDate,
-        },
-        () => {
-          onClose();
-          setLoading(false);
-        }
-      );
+      onReserve(payload, () => {
+        onClose();
+        setLoading(false);
+      });
     } catch (error) {
       setLoading(false);
       console.error(error);

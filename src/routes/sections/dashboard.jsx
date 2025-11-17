@@ -207,7 +207,7 @@ export const dashboardRoutes = [
         children: [
           {
             element: (
-              <RoleBasedGuard hasContent roles={['1', '2', '3']}>
+              <RoleBasedGuard hasContent roles={['1', '2', '3','5']}>
                 <ObjectListPage />
               </RoleBasedGuard>
             ),
@@ -497,7 +497,7 @@ export const dashboardRoutes = [
         children: [
           {
             element: (
-              <RoleBasedGuard hasContent roles={['1']}>
+              <RoleBasedGuard hasContent roles={['1','5']}>
                 <RealtorListPage />
               </RoleBasedGuard>
             ),

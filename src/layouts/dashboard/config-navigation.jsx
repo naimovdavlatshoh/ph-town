@@ -56,6 +56,7 @@ const ICONS = {
 
 export function useNavData() {
   const { t } = useTranslate();
+
   // const data = useMemo(
   //   () => [
   //     // OVERVIEW
@@ -352,7 +353,7 @@ export function useNavData() {
             title: t('Дашборд'),
             path: paths.dashboard.home.root,
             icon: ICONS.statistic,
-            roles: ['1', '4', '6'],
+            roles: ['1'],
           },
           {
             title: t('Материалы'),
@@ -370,13 +371,13 @@ export function useNavData() {
             title: t('Мои объекты'),
             path: paths.dashboard.object.root,
             icon: ICONS.banking,
-            roles: ['1', '2', '3'],
+            roles: ['1', '2', '3', '5'],
           },
           {
             title: t('Контракты'),
             path: paths.dashboard.contracts.root,
             icon: ICONS.contract,
-            roles: ['1', '2', '3', '5'],
+            roles: ['1', '2', '5'],
           },
           {
             title: t('Касса-Контракт'),
@@ -402,24 +403,24 @@ export function useNavData() {
             icon: ICONS.expense,
             roles: ['1', '7'],
           },
-          {
-            title: t('Касса-Склад'),
-            path: paths.dashboard.payments.kassaSklad,
-            icon: ICONS.investment,
-            roles: ['1', '4', '5'],
-          },
+          // {
+          //   title: t('Касса-Склад'),
+          //   path: paths.dashboard.payments.kassaSklad,
+          //   icon: ICONS.investment,
+          //   roles: ['1', '2', '4', '5'],
+          // },
           // {
           //   title: t('Банк'),
           //   path: paths.dashboard.bank.root,
           //   icon: ICONS.banking,
           //   roles: ['1', '2'],
           // },
-          {
-            title: t('Склад'),
-            path: paths.dashboard.warehouse.root,
-            icon: ICONS.warehouse,
-            roles: ['1', '4', '5', '6'],
-          },
+          // {
+          //   title: t('Склад'),
+          //   path: paths.dashboard.warehouse.root,
+          //   icon: ICONS.warehouse,
+          //   roles: ['1', '2', '4', '5', '6'],
+          // },
           {
             title: t('Пользователи'),
             path: paths.dashboard.users.root,
@@ -436,7 +437,7 @@ export function useNavData() {
             title: t('Риэлторы'),
             path: paths.dashboard.realtors.root,
             icon: ICONS.expense,
-            roles: ['1'],
+            roles: ['1', '2', '5'],
           },
         ],
       },

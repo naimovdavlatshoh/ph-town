@@ -57,7 +57,7 @@ export default function ObjectItem({ object }) {
                 component={RouterLink}
                 color="inherit"
                 href={
-                  ['1', '2'].includes(user?.role) ? paths.dashboard.object.details(project_id) : ''
+                  ['1', '2','5'].includes(user?.role) ? paths.dashboard.object.details(project_id) : ''
                 }
               >
                 {project_name}

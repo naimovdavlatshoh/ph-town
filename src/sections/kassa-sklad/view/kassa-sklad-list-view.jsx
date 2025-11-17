@@ -427,7 +427,7 @@ export default function KassaSkladListView() {
           <TablePaginationCustom
             count={count}
             page={page}
-            rowsPerPage={10}
+            rowsPerPage={30}
             rowsPerPageOptions={[]}
             onPageChange={(_, nextPage) => navigate(`/dashboard/kassa-sklad/${nextPage}`)}
             labelDisplayedRows={(paginationInfo) =>

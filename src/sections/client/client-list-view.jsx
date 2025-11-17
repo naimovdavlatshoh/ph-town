@@ -316,7 +316,7 @@ export default function ClientListView() {
             pageSizeOptions={[]}
             initialState={{
               pagination: {
-                paginationModel: { pageSize: 10 },
+                paginationModel: { pageSize: 30 },
               },
             }}
             onRowSelectionModelChange={(newSelectionModel) => {

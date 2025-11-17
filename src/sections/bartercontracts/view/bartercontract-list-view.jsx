@@ -555,7 +555,7 @@ export default function BarterContractListView() {
           <TablePaginationCustom
             count={count}
             page={page}
-            rowsPerPage={10}
+            rowsPerPage={30}
             rowsPerPageOptions={[]}
             onPageChange={(_, nextPage) => navigate(`/dashboard/barter-contracts/${nextPage}`)}
             labelDisplayedRows={(paginationInfo) =>

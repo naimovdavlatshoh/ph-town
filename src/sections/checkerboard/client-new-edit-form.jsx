@@ -29,7 +29,7 @@ import { useSnackbar } from 'src/components/snackbar';
 import RHFInnField from 'src/components/hook-form/rhf-inn-field';
 import RHFPassportField from 'src/components/hook-form/rhf-passport-field';
 import FormProvider, { RHFUpload, RHFTextField, RHFAutocomplete } from 'src/components/hook-form';
-
+import { CUSTOM_BASE_URL } from 'src/utils/custom-base-url';
 import ClientPhonesListForm from './client-phones-list-form';
 
 // ----------------------------------------------------------------------
@@ -145,7 +145,7 @@ export default function ClientNewEditForm({ currentClient }) {
 
       // const url = 'https://api.argon.uz/api/v1/clients/passport';
       // const url = 'https://api.ph.town/api/v1/clients/passport';
-      const url = 'https://testapi.ph.town/api/v1/clients/passport';
+      const url = `${CUSTOM_BASE_URL}/api/v1/clients/passport`;
 
       await axios.post(url, formData, {
         headers: {

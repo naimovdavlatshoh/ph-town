@@ -26,9 +26,14 @@ export default function ContractInfo({ title, contract, sx, ...other }) {
 
   return (
     <Card sx={{ p: 3, ...sx }} {...other}>
-      <Typography variant="subtitle2" gutterBottom>
-        {title}
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} mb={2}>
+        <Typography variant="subtitle2">{title}</Typography>
+        {contract?.contract_cash_type !== undefined && (
+          <Label color={contract?.contract_cash_type === '1' ? 'info' : 'warning'}>
+            {contract?.contract_cash_type === '1' ? 'Сумовой контракт' : 'Долларовый контракт'}
+          </Label>
+        )}
+      </Stack>
 
       <Stack spacing={2}>
         <Stack direction="row" justifyContent="space-between">
@@ -97,6 +102,19 @@ export default function ContractInfo({ title, contract, sx, ...other }) {
           </Typography>
           <Typography variant="subtitle1">{fCurrency(paidAmount) || paidAmount}</Typography>
         </Stack>
+        {contract?.contract_cash_type === '0' && contract?.contract_exchange_rate && (
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Курс доллара контракта
+            </Typography>
+            <Typography variant="body2">
+              {parseFloat(contract.contract_exchange_rate).toLocaleString('ru-RU', {
+                maximumFractionDigits: 2,
+              })}{' '}
+              сум
+            </Typography>
+          </Stack>
+        )}
       </Stack>
     </Card>
   );

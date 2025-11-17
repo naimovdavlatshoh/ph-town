@@ -21,7 +21,7 @@ import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import { DatePicker } from '@mui/x-date-pickers';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Grid, Button, Divider, InputAdornment } from '@mui/material';
+import { Grid, Button, Divider, InputAdornment, MenuItem } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -35,7 +35,7 @@ import convertContractTypeToText from 'src/utils/convert-contract-type-to-text';
 
 import { useGetCurrency } from 'src/api/currency';
 
-import FormProvider, { RHFTextField } from 'src/components/hook-form';
+import FormProvider, { RHFTextField, RHFSelect } from 'src/components/hook-form';
 
 import ContractNewEditClient from './contract-new-edit-client';
 import ContractNewEditDetails from './contract-new-edit-details';
@@ -55,6 +55,16 @@ const getMonthlyPaymentAuto = (type) => {
   }
 
   return 'Автоматически';
+};
+
+const getContractCashType = (cashType) => {
+  if (cashType === 1) {
+    return 'SUM';
+  }
+  if (cashType === 0) {
+    return 'USD';
+  }
+  return 'SUM';
 };
 
 // ----------------------------------------------------------------------
@@ -126,6 +136,12 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
     ),
 
     contract_number: Yup.string().required('Заполните поле'),
+    contract_cash_type: Yup.string().required('Выберите валюту'),
+    contract_exchange_rate: Yup.string().when(
+      'contract_cash_type',
+      ([contract_cash_type], schema) =>
+        contract_cash_type === 'USD' ? schema.required('Введите курс доллара') : schema
+    ),
     startDay: Yup.string().when(
       ['paymentType', 'monthlyPaymentAuto'],
       ([paymentType, monthlyPaymentAuto], schema) =>
@@ -304,6 +320,8 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
       contract_date: currentContract?.date_of_birth
         ? moment(currentContract?.created_at).toDate()
         : moment().toDate(),
+      contract_cash_type: getContractCashType(currentContract?.contract_cash_type),
+      contract_exchange_rate: currentContract?.contract_exchange_rate || '',
     }),
 
     [currentContract]
@@ -362,6 +380,13 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
         'monthly_fee',
         currentContract?.paymentday?.map((item) => item?.monthly_fee)
       );
+
+      methods.setValue(
+        'contract_cash_type',
+        getContractCashType(currentContract?.contract_cash_type)
+      );
+
+      methods.setValue('contract_exchange_rate', currentContract?.contract_exchange_rate || '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentContract]);
@@ -611,7 +636,8 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
           ? moment(mp?.date, 'DD-MM-YYYY', true).isValid()
             ? moment(mp?.date, 'DD-MM-YYYY').format('DD.MM.YYYY г.')
             : moment(mp?.date).format('DD.MM.YYYY г.')
-          : data?.monthlyPaymentAuto === 'Автоматически' || data?.monthlyPaymentAuto === 'Ручное заполнение 2'
+          : data?.monthlyPaymentAuto === 'Автоматически' ||
+              data?.monthlyPaymentAuto === 'Ручное заполнение 2'
             ? moment(mp?.date).format('DD.MM.YYYY г.')
             : moment(mp?.date, 'DD-MM-YYYY').format('DD.MM.YYYY г.'),
         price: new Intl.NumberFormat('de-DE').format(mp?.price),
@@ -743,6 +769,13 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
   }, [methods.watch('paymentType')]);
 
   useEffect(() => {
+    if (methods.watch('contract_cash_type') === 'SUM') {
+      methods.setValue('contract_exchange_rate', '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [methods.watch('contract_cash_type')]);
+
+  useEffect(() => {
     methods.setValue('initialPayment', currentContract ? currentContract?.initial_payment : '');
     methods.setValue('months', currentContract ? currentContract?.paymentday?.length : '');
     methods.setValue(
@@ -863,7 +896,29 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
               </Stack>
 
               {methods.watch('client') && methods.watch('apartment') && (
-                <ClientNewEditPaymentType isEditMode={Boolean(currentContract)} />
+                <Stack spacing={2} sx={{ p: 3 }}>
+                  <Stack direction="row" spacing={2} alignItems="flex-start">
+                    <RHFSelect
+                      name="contract_cash_type"
+                      label="Валюта"
+                      size="small"
+                      sx={{ maxWidth: 200 }}
+                    >
+                      <MenuItem value="SUM">SUM</MenuItem>
+                      <MenuItem value="USD">USD</MenuItem>
+                    </RHFSelect>
+
+                    <RHFTextField
+                      name="contract_exchange_rate"
+                      label="Курс доллара"
+                      size="small"
+                      type="number"
+                      sx={{ maxWidth: 200 }}
+                    />
+                  </Stack>
+
+                  <ClientNewEditPaymentType isEditMode={Boolean(currentContract)} />
+                </Stack>
               )}
             </Grid>
             <Grid sm={12} md={6} item>
@@ -891,7 +946,6 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
                     <ContractNewEditStatusDate />
 
                     <ContractNewEditDetailsAuto2 />
-                  
                   </>
                 )}
             </Grid>

@@ -185,7 +185,7 @@ export default function ContractOverduesFullscreen({ open, handleClose }) {
       <TablePaginationCustom
         count={Number(count)}
         page={page}
-        rowsPerPage={20}
+        rowsPerPage={30}
         rowsPerPageOptions={[]}
         onPageChange={(_, nextPage) => setPage(nextPage)}
         onRowsPerPageChange={(_, nextPage) => setPage(nextPage)}

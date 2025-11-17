@@ -436,7 +436,7 @@ export default function KassaBankExpenditureListView() {
           <TablePaginationCustom
             count={count}
             page={page}
-            rowsPerPage={10}
+            rowsPerPage={30}
             rowsPerPageOptions={[]}
             onPageChange={(_, nextPage) => setPage(nextPage)}
             labelDisplayedRows={(paginationInfo) =>

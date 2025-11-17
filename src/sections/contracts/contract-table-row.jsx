@@ -12,27 +12,28 @@ import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
-
 import { useAuthContext } from 'src/auth/hooks';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
-import axios from 'axios';
+import { CUSTOM_BASE_URL } from 'src/utils/custom-base-url';
 import UserQuickEditForm from './user-quick-edit-form';
 import { RenderCellCreatedAt } from '../checkerboard/client-table-row';
 
-// ----------------------------------------------------------------------
+// -------------------- Helpers --------------------
 
-const getStatusColor = (status) => {
-  if (status === '0') return 'default';
+const getStatusColor = (isDeleted, isTerminated, status) => {
+  if (isDeleted) return 'default';
+  if (isTerminated) return 'error';
   if (status === '1') return 'warning';
   if (status === '2') return 'success';
   return 'default';
 };
 
-const getStatusLabel = (status) => {
-  if (status === '0') return 'Удален';
+const getStatusLabel = (isDeleted, isTerminated, status) => {
+  if (isDeleted) return 'Удален';
+  if (isTerminated) return 'Расторгнут';
   if (status === '1') return 'В процессе';
   if (status === '2') return 'Подтвержден';
   return 'Не определен';
@@ -49,6 +50,8 @@ const getContractTypeLabel = (type) => {
   if (type === '0') return 'Наличка';
   return 'Не определен';
 };
+
+// -------------------- Component --------------------
 
 export default function ContractTableRow({
   row,
@@ -69,6 +72,7 @@ export default function ContractTableRow({
     contract_type,
     created_at,
     is_active,
+    is_terminated,
   } = row;
 
   const [openComment, setOpenComment] = useState(false);
@@ -96,8 +100,8 @@ export default function ContractTableRow({
   const { user } = useAuthContext();
 
   const isDeleted = is_active === '0';
+  const isTerminated = is_terminated === '1';
 
-  // ✅ Switch toggle function with fetch
   const handleToggleSms = async (checked, contractId) => {
     const payload = {
       contract_id: contractId,
@@ -106,9 +110,8 @@ export default function ContractTableRow({
     const token = sessionStorage.getItem('accessToken');
 
     try {
-      const response = await fetch('https://testapi.ph.town/api/v1/contract/updatesms', {
+      const response = await fetch(`${CUSTOM_BASE_URL}/api/v1/contract/updatesms`, {
         method: 'POST',
-
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -124,38 +127,19 @@ export default function ContractTableRow({
     }
   };
 
-  // const terminateContract = async (id) => {
-  //   const token = sessionStorage.getItem('accessToken');
-  //   try {
-  //     const response = await axios.delete('https://testapi.ph.town/api/v1/contract/terminated', {
-  //       data: { contract_id: id },
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-  //     console.log('Success:', response.data);
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error('Error terminating contract:', error);
-  //     throw error;
-  //   }
-  // };
-
   return (
     <>
       <TableRow hover selected={selected}>
         <TableCell sx={{ whiteSpace: 'nowrap' }}>
           {['1', '2', '3'].includes(user?.role) ? (
-            <Link
-              component={RouterLink}
-              href={paths.dashboard.contracts.edit(contract_id)}
-              sx={isDeleted ? { color: 'text.disabled' } : {}}
-            >
+            <Typography sx={isDeleted || isTerminated ? { color: 'text.disabled' } : {}}>
               {contract_number}
-            </Link>
+            </Typography>
           ) : (
-            <Typography variant="body2" sx={isDeleted ? { color: 'text.disabled' } : {}}>
+            <Typography
+              variant="body2"
+              sx={isDeleted || isTerminated ? { color: 'text.disabled' } : {}}
+            >
               {contract_number}
             </Typography>
           )}
@@ -165,7 +149,7 @@ export default function ContractTableRow({
           <Link
             component={RouterLink}
             href={paths.dashboard.clients.details(row?.client_id)}
-            sx={isDeleted ? { color: 'text.disabled' } : {}}
+            sx={isDeleted || isTerminated ? { color: 'text.disabled' } : {}}
           >
             {renderClientName(row)}
           </Link>
@@ -174,10 +158,10 @@ export default function ContractTableRow({
         <TableCell>
           <Label
             variant="soft"
-            color={getStatusColor(is_active)}
-            sx={isDeleted ? { color: 'text.disabled' } : {}}
+            color={getStatusColor(isDeleted, isTerminated, contract_status)}
+            sx={isDeleted || isTerminated ? { color: 'text.disabled' } : {}}
           >
-            {getStatusLabel(contract_status)}
+            {getStatusLabel(isDeleted, isTerminated, contract_status)}
           </Label>
         </TableCell>
 
@@ -187,17 +171,15 @@ export default function ContractTableRow({
           </Label>
         </TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          <IconButton onClick={onPreviewDocument} disabled={is_active === '0'}>
+        <TableCell>
+          <IconButton onClick={onPreviewDocument} disabled={isDeleted || isTerminated}>
             <Iconify icon="material-symbols:contract-outline" />
           </IconButton>
         </TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+        <TableCell>
           <Tooltip
-            PopperProps={{
-              disablePortal: true,
-            }}
+            PopperProps={{ disablePortal: true }}
             onClose={handleTooltipClose}
             open={openComment}
             title={comments || 'Нет комментариев'}
@@ -206,18 +188,14 @@ export default function ContractTableRow({
           </Tooltip>
         </TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          <RenderCellCreatedAt
-            params={{
-              row: { createdAt: created_at },
-            }}
-          />
+        <TableCell>
+          <RenderCellCreatedAt params={{ row: { createdAt: created_at } }} />
         </TableCell>
 
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
           <Tooltip title="Детали" placement="top" arrow>
             <IconButton
-              disabled={is_active === '0'}
+              disabled={isDeleted}
               color={quickEdit.value ? 'inherit' : 'default'}
               component={RouterLink}
               href={paths.dashboard.contracts.details(contract_id)}
@@ -228,7 +206,7 @@ export default function ContractTableRow({
 
           {['1', '2'].includes(user?.role) && (
             <IconButton
-              disabled={is_active === '0'}
+              disabled={isDeleted || isTerminated}
               color={popover.open ? 'inherit' : 'default'}
               onClick={popover.onOpen}
             >
@@ -237,54 +215,54 @@ export default function ContractTableRow({
           )}
 
           <Switch
-            disabled={is_active === '0' || contract_status !== '2'}
-            defaultChecked={send_an_sms === '1' && is_active !== '0'}
+            disabled={isDeleted || contract_status !== '2' || is_terminated === 1}
+            defaultChecked={send_an_sms === '1' && !isDeleted && !isTerminated}
             onChange={(event) => handleToggleSms(event.target.checked, contract_id)}
-            inputProps={{ 'aria-label': 'controlled' }}
           />
         </TableCell>
       </TableRow>
 
       <UserQuickEditForm currentUser={row} open={quickEdit.value} onClose={quickEdit.onFalse} />
 
-      <CustomPopover
-        open={popover.open}
-        onClose={popover.onClose}
-        arrow="right-top"
-        sx={{ width: 140 }}
-      >
-        {is_active !== '0' && ['1', '2'].includes(user?.role) && (
-          <MenuItem
-            onClick={() => {
-              onDeleteRow(contract_id);
-              popover.onClose();
-            }}
-            sx={{ color: 'error.main' }}
-          >
-            <Iconify icon="solar:trash-bin-trash-bold" />
-            Удалить
-          </MenuItem>
-        )}
-        {is_active !== '0' && ['1', '2'].includes(user?.role) && (
-          <MenuItem
-            onClick={() => {
-              onTerminateRow(contract_id);
-              popover.onClose();
-            }}
-            sx={{ color: 'error.main' }}
-          >
-            <Iconify icon="mdi:close-circle-outline" />
-            Расторгнут
-          </MenuItem>
-        )}
+      {!isDeleted && !isTerminated && (
+        <CustomPopover
+          open={popover.open}
+          onClose={popover.onClose}
+          arrow="right-top"
+          sx={{ width: 140 }}
+        >
+          {['1', '2'].includes(user?.role) && (
+            <>
+              <MenuItem
+                onClick={() => {
+                  onDeleteRow(contract_id);
+                  popover.onClose();
+                }}
+                sx={{ color: 'error.main' }}
+              >
+                <Iconify icon="solar:trash-bin-trash-bold" />
+                Удалить
+              </MenuItem>
 
-        {is_active === '1' && (
-          <MenuItem component={RouterLink} href={paths.dashboard.contracts.edit(contract_id)}>
-            <Iconify icon="solar:pen-bold" />
-            Изменить
-          </MenuItem>
-        )}
-      </CustomPopover>
+              <MenuItem
+                onClick={() => {
+                  onTerminateRow(contract_id);
+                  popover.onClose();
+                }}
+                sx={{ color: 'error.main' }}
+              >
+                <Iconify icon="mdi:close-circle-outline" />
+                Расторгнуть
+              </MenuItem>
+
+              <MenuItem component={RouterLink} href={paths.dashboard.contracts.edit(contract_id)}>
+                <Iconify icon="solar:pen-bold" />
+                Изменить
+              </MenuItem>
+            </>
+          )}
+        </CustomPopover>
+      )}
     </>
   );
 }

@@ -269,7 +269,7 @@ export default function ArrivalPayDialog({
               name="payment_amount"
               label="Цена"
               placeholder="0"
-              decimalScale={0}
+              decimalScale={2} // ✅ Endi ondalik sonlarga ruxsat beriladi (masalan, 100.25)
               InputLabelProps={{ shrink: true }}
               InputProps={{
                 endAdornment: <InputAdornment position="start">UZS</InputAdornment>,

@@ -14,7 +14,10 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  ComposedChart,
+  Line,
 } from 'recharts';
+import { CUSTOM_BASE_URL } from 'src/utils/custom-base-url';
 
 // Dummy paths va CustomBreadcrumbs
 const paths = {
@@ -48,6 +51,7 @@ export default function StatisticView() {
   const [data3, setData3] = useState([]); // 🔵 YANGI STATE
   const [blockData, setBlockData] = useState([]);
   const [areaData, setAreaData] = useState([]);
+  const [averagePriceData, setAveragePriceData] = useState([]); // 🔵 YANGI STATE - Average Price
   const [year, setYear] = useState('2024');
 
   const handleChange = (event) => {
@@ -79,27 +83,48 @@ export default function StatisticView() {
     }
   }
 
+  // Number formatting function
+  const formatNumber = (num) => {
+    if (num === null || num === undefined) return 0;
+    return Number(num).toLocaleString('ru-RU', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+  };
+
   useEffect(() => {
-    getDataWithToken(`https://testapi.ph.town/api/v1/dashboard/contracts?year=${year}`).then(
+    console.log('Fetching data for year:', year);
+
+    getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/contracts?year=${year}`).then((data) => {
+      if (!data) {
+        console.log('No data received for contracts');
+        return;
+      }
+
+      const formattedData = data.map((item) => ({
+        ...item,
+        signed_contracts: Number(item.signed_contracts),
+        terminated_contracts: Number(item.terminated_contracts),
+      }));
+      setData1(formattedData);
+    });
+
+    getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/installmentstats?year=${year}`).then(
       (data) => {
-        if (!data) return;
+        if (!data) {
+          console.log('No data received for installment stats');
+          return;
+        }
         const formattedData = data.map((item) => ({
           ...item,
-          signed_contracts: Number(item.signed_contracts),
-          terminated_contracts: Number(item.terminated_contracts),
+          total_paid: Number(item.total_paid),
+          total_expected: Number(item.total_expected),
         }));
-        setData1(formattedData);
+        setData2(formattedData);
       }
     );
 
-    getDataWithToken(`https://testapi.ph.town/api/v1/dashboard/kassarasxod?year=${year}`).then(
-      (data) => {
-        if (!data) return;
-        setData2(data);
-      }
-    );
-
-    getDataWithToken('https://testapi.ph.town/api/v1/dashboard/byblock').then((data) => {
+    getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/byblock`).then((data) => {
       if (!data) return;
       const formattedBlocks = data.map((item) => ({
         block_name: item.block_name,
@@ -110,7 +135,7 @@ export default function StatisticView() {
       setBlockData(formattedBlocks);
     });
 
-    getDataWithToken('https://testapi.ph.town/api/v1/dashboard/byblockarea').then((data) => {
+    getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/byblockarea`).then((data) => {
       if (!data) return;
       const formattedAreaData = data.map((item) => ({
         block_name: item.block_name,
@@ -122,13 +147,17 @@ export default function StatisticView() {
     });
 
     // 🔵 YANGI API CHAQIRUV VA FORMATLASH
-    getDataWithToken(`https://testapi.ph.town/api/v1/dashboard/kassacontract?year=${year}`).then(
+    getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/kassacontract?year=${year}`).then(
       (data) => {
-        if (!data) return;
+        if (!data) {
+          console.log('No data received for kassa contract');
+          return;
+        }
+        console.log('Kassa contract data for year', year, ':', data);
         const formatted = data.map((month) => {
           const paymentMap = {};
           month.payments.forEach((p) => {
-            paymentMap[p.method_name] = p.total_amount;
+            paymentMap[p.method_name] = Number(p.total_amount);
           });
 
           return {
@@ -140,6 +169,25 @@ export default function StatisticView() {
           };
         });
         setData3(formatted);
+      }
+    );
+
+    // 🔵 YANGI API CHAQIRUV - Average Price
+    getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/averageprice?year=${year}`).then(
+      (data) => {
+        if (!data) {
+          console.log('No data received for average price');
+          return;
+        }
+        console.log('Average price data for year', year, ':', data);
+        const formattedData = data.map((item) => ({
+          ...item,
+          sales_count: Number(item.sales_count),
+          total_sales_amount: Number(item.total_sales_amount),
+          total_sold_area: Number(item.total_sold_area),
+          average_price: Number(item.average_price),
+        }));
+        setAveragePriceData(formattedData);
       }
     );
   }, [year]);
@@ -198,7 +246,10 @@ export default function StatisticView() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month_name" />
               <YAxis allowDecimals={false} />
-              <Tooltip />
+              <Tooltip
+                formatter={(value) => formatNumber(value)}
+                labelFormatter={(label) => `Месяц ${label}`}
+              />
               <Legend />
               <Bar dataKey="signed_contracts" fill="#82ca9d" name="Проданных" />
               <Bar dataKey="terminated_contracts" fill="#ff7f7f" name="Удаленных" />
@@ -208,15 +259,18 @@ export default function StatisticView() {
 
         {/* Diagramma 2 */}
         <div style={chartBoxStyle}>
-          <h4>Сумма приходов и платежей по месяцам</h4>
+          <h4>Сводка плана платежей и оплат по месяцам.</h4>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={data2} margin={{ top: 20, right: 30, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month_name" />
-              <Tooltip />
+              <Tooltip
+                formatter={(value) => formatNumber(value)}
+                labelFormatter={(label) => `Месяц : ${label}`}
+              />
               <Legend />
-              <Bar dataKey="total_arrival_amount" stackId="a" fill="#4caf50" name="Приход" />
-              <Bar dataKey="total_payment_amount" stackId="a" fill="#f44336" name="Платеж" />
+              <Bar dataKey="total_paid" stackId="a" fill="#4caf50" name="Всего оплачено" />
+              <Bar dataKey="total_expected" stackId="a" fill="#f44336" name=" Всего ожидается" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -229,7 +283,10 @@ export default function StatisticView() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="block_name" />
               <YAxis allowDecimals={false} />
-              <Tooltip />
+              <Tooltip
+                formatter={(value) => formatNumber(value)}
+                labelFormatter={(label) => `Блок ${label}`}
+              />
               <Legend />
               <Bar dataKey="sold_count" fill="#0088FE" name="Продано" />
               <Bar dataKey="unsold_count" fill="#FFBB28" name="Не продано" />
@@ -245,7 +302,10 @@ export default function StatisticView() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="block_name" />
               <YAxis />
-              <Tooltip />
+              <Tooltip
+                formatter={(value) => formatNumber(value)}
+                labelFormatter={(label) => `Блок ${label}`}
+              />
               <Legend />
               <Bar dataKey="total_area" fill="#8884d8" name="Общая площадь" />
               <Bar dataKey="area_sold_count" fill="#82ca9d" name="Проданная площадь" />
@@ -261,13 +321,50 @@ export default function StatisticView() {
             <BarChart data={data3} margin={{ top: 20, right: 30, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month_name" />
-              <Tooltip />
+              <Tooltip
+                formatter={(value) => formatNumber(value)}
+                labelFormatter={(label) => `Месяц ${label}`}
+              />
               <Legend />
               <Bar dataKey="Наличка" stackId="a" fill="#4caf50" />
               <Bar dataKey="Терминал" stackId="a" fill="#2196f3" />
               <Bar dataKey="Клик" stackId="a" fill="#ff9800" />
               <Bar dataKey="Перечисление" stackId="a" fill="#9c27b0" />
             </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* ✅ Diagramma 6 - Sales Statistics */}
+        <div style={fullChartBoxStyle}>
+          <h4>Статистика продаж по месяцам</h4>
+          <ResponsiveContainer width="100%" height={450}>
+            <ComposedChart data={averagePriceData} margin={{ top: 20, right: 30, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month_name" />
+              <YAxis yAxisId="left" />
+              <YAxis yAxisId="right" orientation="right" />
+              <Tooltip
+                formatter={(value) => formatNumber(value)}
+                labelFormatter={(label) => `Месяц ${label}`}
+                contentStyle={{
+                  backgroundColor: '#f5f5f5',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  padding: '10px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                }}
+              />
+              <Legend />
+              <Bar yAxisId="left" dataKey="sales_count" fill="#e91e63" name="Количество продаж" />
+              <Bar yAxisId="right" dataKey="total_sales_amount" fill="#00bcd4" name="Общая сумма" />
+              <Bar
+                yAxisId="left"
+                dataKey="total_sold_area"
+                fill="#ffc107"
+                name="Общая квадратура"
+              />
+              <Bar yAxisId="right" dataKey="average_price" fill="#9c27b0" name="Средняя цена" />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </div>

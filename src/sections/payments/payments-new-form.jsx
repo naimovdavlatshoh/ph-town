@@ -16,7 +16,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import { MenuItem, Typography, InputAdornment } from '@mui/material';
+import { MenuItem, Typography, InputAdornment, Box } from '@mui/material';
 
 import { useDebounce } from 'src/hooks/use-debounce';
 
@@ -84,6 +84,8 @@ export default function PaymentsNewForm({
     paymentDate: Yup.date().required('Введите дату').nullable(),
     comments: Yup.string(),
     typeOfExpense: Yup.bool().required(''),
+    paymentCurrency: Yup.string().required('Выберите валюту оплаты'),
+    exchangeRate: Yup.string(),
   });
 
   const defaultValues = useMemo(
@@ -105,6 +107,8 @@ export default function PaymentsNewForm({
       paymentDate: new Date(),
       comments: '',
       typeOfExpense: data?.type_of_expense === '1',
+      paymentCurrency: 'SUM',
+      exchangeRate: '',
     }),
     [data]
   );
@@ -141,14 +145,19 @@ export default function PaymentsNewForm({
     try {
       onCreate(
         {
-          cash_type: '1',
+          cash_type: values?.paymentCurrency === 'SUM' ? 1 : 0,
           client_id: values?.client?.client_id,
           contract_id: values?.contract,
           payment_amount: values?.paymentAmount?.replace(/,/g, ''),
-          created_at: values?.paymentDate ? format(new Date(values.paymentDate), 'yyyy-MM-dd') : null,
+          created_at: values?.paymentDate
+            ? format(new Date(values.paymentDate), 'yyyy-MM-dd')
+            : null,
           payment_method: values?.paymentMethod,
           comments: values?.comments,
           type_of_expense: values?.typeOfExpense ? '1' : '0',
+          payment_exchange_rate: values?.exchangeRate
+            ? parseFloat(values?.exchangeRate?.replace(/,/g, '') || values?.exchangeRate)
+            : null,
         },
         () => {
           refresh();
@@ -203,6 +212,52 @@ export default function PaymentsNewForm({
     contractLoading,
     refresh,
   } = useGetContractInfo(methods.watch('contract'));
+
+  const paymentCurrency = methods.watch('paymentCurrency');
+  const paymentAmount = methods.watch('paymentAmount');
+  const exchangeRate = methods.watch('exchangeRate');
+
+  useEffect(() => {
+    if (
+      contractData?.contract_cash_type === '0' &&
+      paymentCurrency === 'USD' &&
+      contractData?.contract_exchange_rate
+    ) {
+      methods.setValue('exchangeRate', `${contractData.contract_exchange_rate}`, {
+        shouldValidate: true,
+      });
+    }
+  }, [
+    contractData?.contract_cash_type,
+    contractData?.contract_exchange_rate,
+    paymentCurrency,
+    methods,
+  ]);
+
+  const parseCurrencyValue = (value) => parseFloat(String(value ?? '').replace(/,/g, '')) || 0;
+
+  const isDollarContract = contractData?.contract_cash_type === '0';
+  const contractExchangeRate = parseCurrencyValue(contractData?.contract_exchange_rate);
+  const currentExchangeRate = parseCurrencyValue(exchangeRate);
+  const normalizedPaymentAmount = parseCurrencyValue(paymentAmount);
+
+  let convertedAmount = null;
+  if (isDollarContract && normalizedPaymentAmount > 0) {
+    if (paymentCurrency === 'USD' && contractExchangeRate > 0) {
+      convertedAmount = normalizedPaymentAmount * contractExchangeRate;
+    } else if (paymentCurrency === 'SUM' && currentExchangeRate > 0 && contractExchangeRate > 0) {
+      convertedAmount = (normalizedPaymentAmount / currentExchangeRate) * contractExchangeRate;
+    }
+  }
+
+  let cashConvertedAmount = null;
+  if (isDollarContract && normalizedPaymentAmount > 0) {
+    if (paymentCurrency === 'USD' && currentExchangeRate > 0) {
+      cashConvertedAmount = normalizedPaymentAmount * currentExchangeRate;
+    } else if (paymentCurrency === 'SUM') {
+      cashConvertedAmount = normalizedPaymentAmount;
+    }
+  }
 
   const renderClientName = (client) => {
     if (client?.client_type === '0') {
@@ -283,14 +338,13 @@ export default function PaymentsNewForm({
         <DatePicker
           label="Дата оплаты"
           value={methods.watch('paymentDate')}
-          onChange={(newValue) => methods.setValue('paymentDate', newValue, { shouldValidate: true })}
+          onChange={(newValue) =>
+            methods.setValue('paymentDate', newValue, { shouldValidate: true })
+          }
           maxDate={new Date()}
+          format="dd/MM/yyyy"
           renderInput={(params) => (
-            <RHFTextField
-              name="paymentDate"
-              {...params}
-              InputLabelProps={{ shrink: true }}
-            />
+            <RHFTextField name="paymentDate" {...params} InputLabelProps={{ shrink: true }} />
           )}
         />
       </LocalizationProvider>
@@ -362,6 +416,29 @@ export default function PaymentsNewForm({
         {methods.watch('contract') && (
           <ContractInfo title="Информация контракта" contract={contractData} />
         )}
+
+        <RHFSelect
+          name="paymentCurrency"
+          label="Валюта оплаты"
+          InputLabelProps={{ shrink: true }}
+          fullWidth
+        >
+          <MenuItem value="SUM">Сум (UZS)</MenuItem>
+          <MenuItem value="USD" disabled={contractData?.contract_cash_type === '1'}>
+            Доллар (USD)
+          </MenuItem>
+        </RHFSelect>
+
+        {contractData?.contract_cash_type === '0' && (
+          <RHFCurrencyField
+            name="exchangeRate"
+            label="Текущий курс доллара"
+            placeholder="0"
+            decimalScale={2}
+            InputLabelProps={{ shrink: true }}
+          />
+        )}
+
         <RHFSelect
           name="paymentMethod"
           label="Вариант оплаты"
@@ -386,7 +463,7 @@ export default function PaymentsNewForm({
           name="paymentAmount"
           label="Сумма оплаты"
           placeholder="0"
-          decimalScale={0}
+          decimalScale={2}
           InputLabelProps={{ shrink: true }}
           InputProps={{
             endAdornment: (
@@ -397,19 +474,69 @@ export default function PaymentsNewForm({
             ),
           }}
         />
+        {isDollarContract && (convertedAmount !== null || cashConvertedAmount !== null) && (
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 1 }} useFlexGap>
+            {convertedAmount !== null && (
+              <Box
+                sx={{
+                  flex: 1,
+                  p: 2,
+                  bgcolor: 'background.neutral',
+                  borderRadius: 1,
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}
+                >
+                  Квитанция:
+                </Typography>
+                <Typography variant="subtitle2">
+                  {convertedAmount.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+                  сум
+                </Typography>
+              </Box>
+            )}
+
+            {cashConvertedAmount !== null && (
+              <Box
+                sx={{
+                  flex: 1,
+                  p: 2,
+                  bgcolor: 'background.neutral',
+                  borderRadius: 1,
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}
+                >
+                  Касса:
+                </Typography>
+                <Typography variant="subtitle2">
+                  {cashConvertedAmount.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+                  сум
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+        )}
 
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
             label="Дата оплаты"
             value={methods.watch('paymentDate')}
-            onChange={(newValue) => methods.setValue('paymentDate', newValue, { shouldValidate: true })}
+            onChange={(newValue) =>
+              methods.setValue('paymentDate', newValue, { shouldValidate: true })
+            }
             maxDate={new Date()}
+            format="dd/MM/yyyy"
             renderInput={(params) => (
-              <RHFTextField
-                name="paymentDate"
-                {...params}
-                InputLabelProps={{ shrink: true }}
-              />
+              <RHFTextField name="paymentDate" {...params} InputLabelProps={{ shrink: true }} />
             )}
           />
         </LocalizationProvider>

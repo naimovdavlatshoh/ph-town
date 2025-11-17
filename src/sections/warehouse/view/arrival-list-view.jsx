@@ -217,7 +217,6 @@ export default function ArrivalListView() {
           links={[{ name: 'Dashboard', href: paths.dashboard.root }, { name: 'Склад' }]}
           action={
             <Stack gap={1} direction="row">
-              {' '}
               {['1', '2'].includes(user?.role) && (
                 <Stack
                   onClick={exportToExcel.onTrue}
