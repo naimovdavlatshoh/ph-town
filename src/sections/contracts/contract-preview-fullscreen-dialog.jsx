@@ -258,7 +258,7 @@ export default function ContractPreivewFullscreenDialog({
                 onClick={handleCreate}
                 loading={contractsLoading}
               >
-                Сохранить
+                Сохранить11
               </LoadingButton>
             </Stack>
           ) : mode === 'update' ? (

@@ -977,7 +977,7 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
             loading={isSubmitting}
             // onClick={handleCreateAndSend}
           >
-            Далее
+            Далее11
           </LoadingButton>
         </Stack>
       </FormProvider>
