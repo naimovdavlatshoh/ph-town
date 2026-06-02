@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+
 import BarterContractListView from 'src/sections/bartercontracts/view/bartercontract-list-view';
 
 // ----------------------------------------------------------------------

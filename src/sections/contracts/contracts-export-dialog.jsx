@@ -25,11 +25,11 @@ import {
 import axios from 'src/utils/axios';
 
 import { useGetObjects } from 'src/api/object';
+import { useAuthContext } from 'src/auth/hooks';
 
 import { RHFSelect } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';
 import FormProvider from 'src/components/hook-form/form-provider';
-import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 

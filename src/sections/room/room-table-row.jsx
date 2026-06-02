@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 
+import { Switch } from '@mui/material';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import TableRow from '@mui/material/TableRow';
@@ -11,14 +12,15 @@ import ListItemText from '@mui/material/ListItemText';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { CUSTOM_BASE_URL } from 'src/utils/custom-base-url';
+
 import { useAuthContext } from 'src/auth/hooks';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import { usePopover } from 'src/components/custom-popover';
 import { ConfirmDialog } from 'src/components/custom-dialog';
-import { Switch } from '@mui/material';
-import { CUSTOM_BASE_URL } from 'src/utils/custom-base-url';
+
 import RoomImagesDialog from './room-imags-dialog';
 import { RenderCellPrice } from '../product/product-table-row';
 

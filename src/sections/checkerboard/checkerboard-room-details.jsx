@@ -16,9 +16,8 @@ import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { Print } from '@mui/icons-material';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-
 import IconButton from '@mui/material/IconButton';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import {
   Link,
   Grid,
@@ -44,6 +43,7 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { CUSTOM_BASE_URL } from 'src/utils/custom-base-url';
 import { fNumber, fCurrency } from 'src/utils/format-number';
 import getStatusColor, { getStatusTitle } from 'src/utils/apartment-status';
 
@@ -60,7 +60,7 @@ import FormProvider from 'src/components/hook-form/form-provider';
 import RHFPINFLField from 'src/components/hook-form/rhf-pinfl-field';
 import FileThumbnail from 'src/components/file-thumbnail/file-thumbnail';
 import RHFCurrencyField from 'src/components/hook-form/rhf-currency-field';
-import { CUSTOM_BASE_URL } from 'src/utils/custom-base-url';
+
 import ReserveRoomDialog from './reserve-room-dialog';
 import styles from './checkerboard-room-details.module.css';
 
@@ -85,7 +85,7 @@ export default function CheckerboardRoomDetails({
   dereserve,
   ...other
 }) {
-  const stock_status = other.stock_status;
+  const {stock_status} = other;
 
   const { currency } = useGetCurrency();
   const { apartment } = useGetApartmentInfo(roomId);

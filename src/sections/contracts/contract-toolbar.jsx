@@ -20,11 +20,12 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import axios, { endpoints } from 'src/utils/axios';
 
+import { useAuthContext } from 'src/auth/hooks';
 import { useGetContracts } from 'src/api/contract';
 
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
-import { useAuthContext } from 'src/auth/hooks';
+
 import ContractPreivewFullscreenDialog from './contract-preview-fullscreen-dialog';
 
 

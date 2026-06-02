@@ -21,7 +21,7 @@ import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import { DatePicker } from '@mui/x-date-pickers';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Grid, Button, Divider, InputAdornment, MenuItem } from '@mui/material';
+import { Grid, Button, Divider, MenuItem, InputAdornment } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -35,15 +35,15 @@ import convertContractTypeToText from 'src/utils/convert-contract-type-to-text';
 
 import { useGetCurrency } from 'src/api/currency';
 
-import FormProvider, { RHFTextField, RHFSelect } from 'src/components/hook-form';
+import FormProvider, { RHFSelect, RHFTextField } from 'src/components/hook-form';
 
 import ContractNewEditClient from './contract-new-edit-client';
 import ContractNewEditDetails from './contract-new-edit-details';
 import ContractNewEditStatusDate from './contract-new-edit-status-date';
 import ClientNewEditPaymentType from './contract-new-edit-payment-type';
 import ContractNewEditDetailsAuto from './contract-new-edit-details-auto';
-import ContractPreivewFullscreenDialog from './contract-preview-fullscreen-dialog';
 import ContractNewEditDetailsAuto2 from './contract-new-edit-details-auto2';
+import ContractPreivewFullscreenDialog from './contract-preview-fullscreen-dialog';
 
 const getMonthlyPaymentAuto = (type) => {
   if (type === '1') {

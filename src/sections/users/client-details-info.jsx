@@ -8,6 +8,7 @@ import { Chip, Grid } from '@mui/material';
 import Divider from '@mui/material/Divider';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
+
 import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------

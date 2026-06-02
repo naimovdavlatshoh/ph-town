@@ -28,6 +28,8 @@ import { isAfter } from 'src/utils/format-time';
 import { fCurrency } from 'src/utils/format-number';
 
 import { _invoices } from 'src/_mock';
+import { useAuthContext } from 'src/auth/hooks';
+import { useGetBarterContracts } from 'src/api/bartercontracts';
 
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
@@ -41,15 +43,12 @@ import {
   TableSelectedAction,
   TablePaginationCustom,
 } from 'src/components/table';
-import { useGetBarterContracts } from 'src/api/bartercontracts';
-import { useAuthContext } from 'src/auth/hooks';
-import BarterContractTableRow from '../bartercontract-table-row';
-
-import PaymentsNewForm from '../../payments/payments-new-form';
-import PaymentsAnalytic from '../../payments/payments-analytic';
 
 // eslint-disable-next-line import/no-unresolved
 import clickLogo from '../../../../public/logo/Click.png';
+import PaymentsNewForm from '../../payments/payments-new-form';
+import PaymentsAnalytic from '../../payments/payments-analytic';
+import BarterContractTableRow from '../bartercontract-table-row';
 import InvoiceTableToolbar from '../../payments/invoice-table-toolbar';
 import ContractCashReceipt from '../../payments/contract-cash-receipt';
 import PaymentsExcelDialog from '../../payments/payments-export-dialog';

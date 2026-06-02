@@ -25,12 +25,12 @@ import { useDebounce } from 'src/hooks/use-debounce';
 
 import axios from 'src/utils/axios';
 
+import { useAuthContext } from 'src/auth/hooks';
 import { useGetContragents, useSearchContragents } from 'src/api/contragents';
 
 import { RHFAutocomplete } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';
 import FormProvider from 'src/components/hook-form/form-provider';
-import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 

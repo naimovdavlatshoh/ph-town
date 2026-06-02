@@ -10,8 +10,9 @@ import Divider from '@mui/material/Divider';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 
-import Iconify from 'src/components/iconify';
 import { useAuthContext } from 'src/auth/hooks';
+
+import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 

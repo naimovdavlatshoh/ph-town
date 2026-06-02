@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import Container from '@mui/material/Container';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-
+import React, { useState, useEffect } from 'react';
 import {
-  BarChart,
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
   Legend,
-  ResponsiveContainer,
+  Tooltip,
+  BarChart,
+  CartesianGrid,
   ComposedChart,
-  Line,
+  ResponsiveContainer,
 } from 'recharts';
+
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Container from '@mui/material/Container';
+
 import { CUSTOM_BASE_URL } from 'src/utils/custom-base-url';
 
 // Dummy paths va CustomBreadcrumbs
