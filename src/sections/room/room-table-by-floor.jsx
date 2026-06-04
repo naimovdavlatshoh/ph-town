@@ -1,10 +1,9 @@
 import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
-import { IconButton } from 'yet-another-react-lightbox';
 import { memo, useState, useEffect, useCallback } from 'react';
 
-import { Table, Button, Tooltip, TableBody, TableContainer } from '@mui/material';
+import { Table, Button, Tooltip, TableBody, IconButton, TableContainer } from '@mui/material';
 
 import { useRouter } from 'src/routes/hooks';
 
@@ -19,10 +18,8 @@ import Scrollbar from 'src/components/scrollbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import {
   useTable,
-  emptyRows,
   TableNoData,
   getComparator,
-  TableEmptyRows,
   TableSelectedAction,
 } from 'src/components/table';
 
@@ -34,16 +31,8 @@ const TABLE_HEAD = [
   { id: 'roomNum', label: 'Номер помещения', width: 100 },
   { id: 'roomQty', label: 'Комнат', width: 40 },
   { id: 'area', label: 'Цена за м2', width: 100 },
-  {
-    id: 'price',
-    label: 'Полная цена ($)',
-    width: 100,
-  },
-  {
-    id: 'price_sum',
-    label: 'Полная цена (сум)',
-    width: 100,
-  },
+  { id: 'price', label: 'Полная цена ($)', width: 100 },
+  { id: 'price_sum', label: 'Полная цена (сум)', width: 100 },
   { id: 'status', label: 'Статус', width: 40 },
   { id: 'options', label: 'Опции', width: 88 },
 ];
@@ -51,12 +40,7 @@ const TABLE_HEAD = [
 const TABLE_HEAD_OPERATOR = [
   { id: 'roomNum', label: 'Номер помещения', width: 100 },
   { id: 'roomQty', label: 'Комнат', width: 40 },
-
-  {
-    id: 'price_sum',
-    label: 'Полная цена (сум)',
-    width: 100,
-  },
+  { id: 'price_sum', label: 'Полная цена (сум)', width: 100 },
   { id: 'status', label: 'Статус', width: 40 },
   { id: 'options', label: 'Опции', width: 88 },
 ];
@@ -77,6 +61,7 @@ function RoomTableByFloor({ floorId, projectId }) {
   useEffect(() => {
     setTableData(apartments);
   }, [apartments]);
+
   const { enqueueSnackbar } = useSnackbar();
 
   const [selectedRow, setSelectedRow] = useState();
@@ -95,41 +80,23 @@ function RoomTableByFloor({ floorId, projectId }) {
     filters,
   });
 
-  const dataInPage = dataFiltered.slice(
-    table.page * table.rowsPerPage,
-    table.page * table.rowsPerPage + table.rowsPerPage
-  );
-
-  const denseHeight = table.dense ? 56 : 56 + 20;
   const canReset = !isEqual(defaultFilters, filters);
 
   const notFound = !dataFiltered.length;
-
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
-
-    enqueueSnackbar('Delete success!');
-
-    setTableData(deleteRows);
-
-    table.onUpdatePageDeleteRows({
-      totalRowsInPage: dataInPage.length,
-      totalRowsFiltered: dataFiltered.length,
-    });
-  }, [dataFiltered.length, dataInPage.length, enqueueSnackbar, table, tableData]);
 
   const handleConfirmDeleteRow = useCallback(
     (row) => {
       setSelectedRow(row);
       confirmDelete.onTrue();
-      // const deleteRow = tableData.filter((row) => row.id !== id);
     },
     [confirmDelete]
   );
+
   const handleEditRow = (row) => {
     setSelectedRow(row);
     editRoom.onTrue();
   };
+
   const onDelete = () => {
     remove(selectedRow?.apartment_id, () => {
       enqueueSnackbar('Помещение удалено успешно!');
@@ -177,7 +144,7 @@ function RoomTableByFloor({ floorId, projectId }) {
             />
 
             <TableBody>
-              {dataInPage.map((apartment) => (
+              {dataFiltered.map((apartment) => (
                 <RoomTableRow
                   key={apartment.apartment_id}
                   row={apartment}
@@ -185,11 +152,6 @@ function RoomTableByFloor({ floorId, projectId }) {
                   handleDeleteConfirm={handleConfirmDeleteRow}
                 />
               ))}
-
-              <TableEmptyRows
-                height={denseHeight}
-                emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
-              />
 
               <TableNoData notFound={notFound} />
             </TableBody>

@@ -10,16 +10,17 @@ import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
-import Divider from '@mui/material/Divider';
-import { styled } from '@mui/material/styles';
+// import Divider from '@mui/material/Divider';
 import TableRow from '@mui/material/TableRow';
 import TableHead from '@mui/material/TableHead';
 import TableCell from '@mui/material/TableCell';
 import TableBody from '@mui/material/TableBody';
 import Grid from '@mui/material/Unstable_Grid2';
+import { Button, Tooltip } from '@mui/material';
 import Typography from '@mui/material/Typography';
+import { alpha, styled } from '@mui/material/styles';
+import LinearProgress from '@mui/material/LinearProgress';
 import TableContainer from '@mui/material/TableContainer';
-import { Button, Tooltip, ButtonBase } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -30,6 +31,7 @@ import { useAuthContext } from 'src/auth/hooks';
 import { useGetPayments } from 'src/api/payments';
 import { useGetContracts } from 'src/api/contract';
 
+import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 import EmptyContent from 'src/components/empty-content/empty-content';
@@ -49,8 +51,6 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-// ----------------------------------------------------------------------
-
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -62,6 +62,35 @@ const VisuallyHiddenInput = styled('input')({
   whiteSpace: 'nowrap',
   width: 1,
 });
+
+// -------------------- Helpers --------------------
+
+const InfoItem = ({ label, children }) => (
+  <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+    <Typography
+      variant="caption"
+      sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.4 }}
+    >
+      {label}
+    </Typography>
+    <Box sx={{ typography: 'subtitle2' }}>{children || '—'}</Box>
+  </Stack>
+);
+
+InfoItem.propTypes = {
+  label: PropTypes.string,
+  children: PropTypes.node,
+};
+
+const getPayDayStatus = (monthlyFee, givenAmount) => {
+  const fee = Number(monthlyFee) || 0;
+  const given = Number(givenAmount) || 0;
+  if (given <= 0) return { color: 'default', label: 'Ожидает', percent: 0 };
+  if (given >= fee) return { color: 'success', label: 'Оплачено', percent: 100 };
+  return { color: 'warning', label: 'Частично', percent: fee ? (given * 100) / fee : 0 };
+};
+
+// ----------------------------------------------------------------------
 
 export default function ContractApartmentDetails({ invoice, contract, refresh }) {
   const [currentStatus, setCurrentStatus] = useState(invoice.status);
@@ -102,7 +131,6 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
     try {
       const filePDF = e.target.files[0];
 
-      // Проверка расширения файла
       const allowedExtensions = /(\.pdf)$/i;
       if (!allowedExtensions.exec(filePDF.name)) {
         enqueueSnackbar('Неправильный формат файла. Пожалуйста, загрузите PDF файл.', {
@@ -111,8 +139,7 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
         return;
       }
 
-      // Проверка размера файла
-      const maxSizeInBytes = 15728640.01; // 2 MB
+      const maxSizeInBytes = 15728640.01;
       if (filePDF.size > maxSizeInBytes) {
         enqueueSnackbar('Файл слишком большой. Максимальный размер файла - 15MB.', {
           variant: 'warning',
@@ -121,7 +148,6 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
       }
 
       const formData = new FormData();
-
       formData.append('contract_copy', filePDF);
 
       setLoadingUploadFile(true);
@@ -129,14 +155,6 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
       const { data } = await axios.post(endpoints.contract.uploadFile, formData);
 
       setFile(data?.contract_file_id);
-
-      // const formData = new FormData();
-      // formData.append('contract_id', 1);
-      // formData.append('contract_file_id', 1);
-      // update({
-      //   contract_id: contract?.contract_id,
-      //   contract_file_id: data?.contract_file_id,
-      // });
     } catch (error) {
       enqueueSnackbar('Ошибка загрузки файла', {
         variant: 'error',
@@ -189,12 +207,9 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
   const downloadWord = async () => {
     setLoadingWord(true);
     try {
-      // Берём JWT. Проверь ключ хранилища — у minimals обычно 'accessToken'.
       const accessToken =
         sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
 
-      // Запрос на ВНЕШНИЙ домен. Используем нативный fetch, чтобы не цеплять
-      // baseURL и интерсепторы основного axios-инстанса.
       const response = await fetch('https://contractfile.ph.town/generate', {
         method: 'POST',
         headers: {
@@ -206,7 +221,6 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
 
       const result = await response.json();
 
-      // Сервер сам сообщает об ошибке через success:false
       if (!result?.success) {
         enqueueSnackbar(result?.message || 'Не удалось сгенерировать файл', {
           variant: 'error',
@@ -219,7 +233,6 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
         return;
       }
 
-      // Скачиваем файл по полученной ссылке
       saveAs(result.url, `Контракт-${contract?.contract_number || contract?.contract_id}.docx`);
       enqueueSnackbar('Файл успешно загружен!', { variant: 'success' });
     } catch (error) {
@@ -230,290 +243,254 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
     }
   };
 
-  const renderContractInfo = (
-    <Card sx={{ py: 3, textAlign: 'center', typography: 'subtitle2', fontSize: 16 }}>
-      <Stack
-        direction="row"
-        divider={<Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />}
-      >
-        <Stack width={1}>
-          Контракт
-          <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-            {contract?.contract_number}
-          </Box>
-        </Stack>
-        <Stack width={1}>
-          Клиент
-          <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-            {contract?.client_type === '0' ? (
-              <>
-                {contract?.client_name?.charAt(0).toUpperCase()}.
-                {contract?.client_fathername?.charAt(0).toUpperCase()}.
-                {contract?.client_surname || ''}
-              </>
-            ) : (
-              `${contract?.business_name}. ${contract?.business_director_name}`
-            )}
-          </Box>
-        </Stack>
-        <Stack width={1}>
-          Номер телефона
-          <Stack
-            direction="row"
-            component="span"
-            justifyContent="center"
-            sx={{ color: 'text.secondary', typography: 'body2' }}
-          >
-            {contract?.phone_option?.map((phone) => (
-              <Typography key={phone?.phone_id} variant="body2">
-                {phone?.phone_number};
-              </Typography>
-            ))}
-          </Stack>
-        </Stack>
-        <Stack width={1}>
-          Инфо. помещения
-          <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-            {`${contract?.block_name}. ${contract?.entrance_name}. ${contract?.floor_number}. ${contract?.apartment_name} - кв.`}
-          </Box>
-        </Stack>{' '}
-        <Stack>
-          {(contract?.contract_status === '1' && (
-            <Tooltip
-              title={
-                file ? "Нажмите кнопку 'Сохранить' для сохранения" : 'Загрузить копию договора'
+  // -------------------- Render: Шапка --------------------
+
+  const renderClientName = () => {
+    if (contract?.client_type === '0') {
+      return `${contract?.client_surname || ''} ${contract?.client_name || ''} ${
+        contract?.client_fathername || ''
+      }`.trim();
+    }
+    return `${contract?.business_name || ''}${
+      contract?.business_director_name ? `. Директор: ${contract.business_director_name}` : ''
+    }`;
+  };
+
+  const renderCopyButton = () => {
+    if (contract?.contract_status === '1') {
+      return (
+        <Tooltip title={file ? "Нажмите 'Сохранить' для сохранения" : 'Загрузить копию договора'}>
+          <Stack direction="row" alignItems="center" spacing={0.5}>
+            <Button
+              color={file ? 'info' : 'warning'}
+              variant="contained"
+              component="label"
+              role={undefined}
+              tabIndex={-1}
+              startIcon={
+                loadingUploadFile ? (
+                  <Iconify icon="line-md:uploading-loop" />
+                ) : (
+                  <Iconify
+                    icon={file ? 'vscode-icons:file-type-pdf2' : 'line-md:cloud-upload-loop'}
+                  />
+                )
               }
             >
-              <Stack direction="row" alignItems="center" gap={0.2}>
-                {' '}
-                <Button
-                  color={file ? 'info' : 'warning'}
-                  component="label"
-                  role={undefined}
-                  tabIndex={-1}
-                  sx={{ minWidth: 200, color: '#637381' }}
-                  startIcon={
-                    loadingUploadFile ? (
-                      <Iconify icon="line-md:uploading-loop" />
-                    ) : (
-                      <Iconify
-                        icon={file ? 'vscode-icons:file-type-pdf2' : 'line-md:cloud-upload-loop'}
-                      />
-                    )
-                  }
-                >
-                  Копия договора
-                  <VisuallyHiddenInput type="file" onChange={uploadDocumentCopy} />
-                </Button>
-                {file && (
-                  <LoadingButton
-                    loading={contractsLoading}
-                    onClick={onSave}
-                    size="small"
-                    variant="contained"
-                    startIcon={<Iconify icon="material-symbols:save-outline" />}
-                  >
-                    Сохранить
-                  </LoadingButton>
-                )}
-              </Stack>
-            </Tooltip>
-          )) ||
-            (contract?.contract_status === '2' && (
-              <Tooltip title="Открыть файл договора">
-                <Button
-                  component="a"
-                  href={contract?.download_link}
-                  role={undefined}
-                  tabIndex={-1}
-                  sx={{ minWidth: 200, color: '#637381' }}
-                  startIcon={<Iconify icon="vscode-icons:file-type-pdf2" />}
-                >
-                  Копия договора
-                </Button>
-              </Tooltip>
-            ))}
-        </Stack>
-        <Stack gap={1} width={1} alignItems="center">
-          {contract?.contract_status === '2' && ['1', '2', '5'].includes(user?.role) && (
-            <Stack
-              onClick={paymentDialog.onTrue}
-              component={ButtonBase}
-              alignItems="center"
-              width={100}
-              height={50}
-              sx={{ background: '#01a76f', py: 1, px: 1, borderRadius: 0.5 }}
-            >
-              <Iconify icon="uiw:pay" sx={{ width: 40, color: '#ffff' }} />
-              <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                Оплатить
-              </Box>
-            </Stack>
-          )}
-          {['1', '2'].includes(user?.role) && (
-            <Stack
-              onClick={downloadWord}
-              component={ButtonBase}
-              disabled={loadingWord}
-              alignItems="center"
-              width={100}
-              height={50}
-              sx={{
-                background: loadingWord ? '#1877f233' : '#1877f2',
-                py: 1,
-                px: 1,
-                borderRadius: 0.5,
-              }}
-              direction="row"
-            >
-              <Iconify icon="vscode-icons:file-type-word" sx={{ width: 40, color: '#ffff' }} />
-              <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                {loadingWord ? 'Создаём...' : 'Word'}
-              </Box>
-            </Stack>
-          )}
-          <Stack
-            onClick={exportToExcel}
-            component={ButtonBase}
-            alignItems="center"
-            width={100}
-            height={50}
-            sx={{
-              background: loadingExcelFile ? '#01a76f33' : '#01a76f',
-              py: 1,
-              px: 1,
-              borderRadius: 0.5,
-            }}
-            direction="row"
-          >
-            <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
-            {['1', '2'].includes(user?.role) && (
-              <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                Excel
-              </Box>
+              Копия договора
+              <VisuallyHiddenInput type="file" onChange={uploadDocumentCopy} />
+            </Button>
+            {file && (
+              <LoadingButton
+                loading={contractsLoading}
+                onClick={onSave}
+                variant="contained"
+                startIcon={<Iconify icon="material-symbols:save-outline" />}
+              >
+                Сохранить
+              </LoadingButton>
             )}
           </Stack>
-        </Stack>
-      </Stack>
+        </Tooltip>
+      );
+    }
+    if (contract?.contract_status === '2') {
+      return (
+        <Tooltip title="Открыть файл договора">
+          <Button
+            component="a"
+            href={contract?.download_link}
+            variant="contained"
+            color="error"
+            role={undefined}
+            tabIndex={-1}
+            startIcon={<Iconify icon="vscode-icons:file-type-pdf2" />}
+          >
+            Копия договора
+          </Button>
+        </Tooltip>
+      );
+    }
+    return null;
+  };
+
+  const renderContractInfo = (
+    <Card sx={{ p: 3 }}>
+      <Grid container spacing={3} alignItems="center">
+        {/* Инфо-блок */}
+        <Grid xs={12} md={8}>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 2.5,
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
+            }}
+          >
+            <InfoItem label="Контракт">{contract?.contract_number}</InfoItem>
+
+            <InfoItem label="Клиент">{renderClientName()}</InfoItem>
+
+            <InfoItem label="Телефон">
+              <Stack spacing={0.25}>
+                {contract?.phone_option?.length
+                  ? contract.phone_option.map((phone) => (
+                      <Typography key={phone?.phone_id} variant="body2">
+                        {phone?.phone_number}
+                      </Typography>
+                    ))
+                  : '—'}
+              </Stack>
+            </InfoItem>
+
+            <InfoItem label="Помещение">
+              {`${contract?.block_name || ''}, ${contract?.entrance_name || ''}, эт. ${
+                contract?.floor_number || ''
+              }, кв. ${contract?.apartment_name || ''}`}
+            </InfoItem>
+          </Box>
+        </Grid>
+
+        {/* Действия */}
+        {/* Действия */}
+        <Grid xs={12} md={4}>
+          <Stack
+            direction="row"
+            flexWrap="wrap"
+            spacing={1}
+            useFlexGap
+            justifyContent={{ xs: 'flex-start', md: 'flex-end' }}
+            alignItems="center"
+            sx={{
+              // одинаковая высота и базовая ширина для всех кнопок ряда
+              '& .MuiButton-root': {
+                height: 40,
+                minWidth: 140,
+                whiteSpace: 'nowrap',
+              },
+            }}
+          >
+            {renderCopyButton()}
+
+            {contract?.contract_status === '2' && ['1', '2', '5'].includes(user?.role) && (
+              <Button
+                onClick={paymentDialog.onTrue}
+                variant="contained"
+                color="success"
+                startIcon={<Iconify icon="solar:wad-of-money-bold" />}
+              >
+                Оплатить
+              </Button>
+            )}
+
+            {['1', '2'].includes(user?.role) && (
+              <LoadingButton
+                onClick={downloadWord}
+                loading={loadingWord}
+                variant="contained"
+                color="info"
+                startIcon={<Iconify icon="vscode-icons:file-type-word" />}
+              >
+                Word
+              </LoadingButton>
+            )}
+
+            {['1', '2'].includes(user?.role) && (
+              <LoadingButton
+                onClick={exportToExcel}
+                loading={loadingExcelFile}
+                variant="contained"
+                color="success"
+                startIcon={<Iconify icon="healthicons:excel-logo" />}
+              >
+                Excel
+              </LoadingButton>
+            )}
+          </Stack>
+        </Grid>
+      </Grid>
     </Card>
   );
 
-  const renderTotal = (
-    <>
-      <StyledTableRow>
-        <TableCell colSpan={3} />
-        <TableCell sx={{ color: 'text.secondary' }}>
-          <Box sx={{ mt: 2 }} />
-          Subtotal
-        </TableCell>
-        <TableCell width={120} sx={{ typography: 'subtitle2' }}>
-          <Box sx={{ mt: 2 }} />
-          {fCurrency(invoice.subTotal)}
-        </TableCell>
-      </StyledTableRow>
-
-      <StyledTableRow>
-        <TableCell colSpan={3} />
-        <TableCell sx={{ color: 'text.secondary' }}>Shipping</TableCell>
-        <TableCell width={120} sx={{ color: 'error.main', typography: 'body2' }}>
-          {fCurrency(-invoice.shipping)}
-        </TableCell>
-      </StyledTableRow>
-
-      <StyledTableRow>
-        <TableCell colSpan={3} />
-        <TableCell sx={{ color: 'text.secondary' }}>Discount</TableCell>
-        <TableCell width={120} sx={{ color: 'error.main', typography: 'body2' }}>
-          {fCurrency(-invoice.discount)}
-        </TableCell>
-      </StyledTableRow>
-
-      <StyledTableRow>
-        <TableCell colSpan={3} />
-        <TableCell sx={{ color: 'text.secondary' }}>Taxes</TableCell>
-        <TableCell width={120}>{fCurrency(invoice.taxes)}</TableCell>
-      </StyledTableRow>
-
-      <StyledTableRow>
-        <TableCell colSpan={3} />
-        <TableCell sx={{ typography: 'subtitle1' }}>Total</TableCell>
-        <TableCell width={140} sx={{ typography: 'subtitle1' }}>
-          {fCurrency(invoice.totalAmount)}
-        </TableCell>
-      </StyledTableRow>
-    </>
-  );
-
-  const renderFooter = (
-    <Grid container>
-      <Grid xs={12} md={9} sx={{ py: 3 }}>
-        <Typography variant="subtitle2">NOTES</Typography>
-
-        <Typography variant="body2">
-          We appreciate your business. Should you need us to add VAT or extra notes let us know!
-        </Typography>
-      </Grid>
-
-      <Grid xs={12} md={3} sx={{ py: 3, textAlign: 'right' }}>
-        <Typography variant="subtitle2">Have a Question?</Typography>
-
-        <Typography variant="body2">support@minimals.cc</Typography>
-      </Grid>
-    </Grid>
-  );
+  // -------------------- Render: График оплат --------------------
 
   const paymentsDayList = (
     <TableContainer sx={{ overflow: 'unset', mt: 5 }}>
       <Scrollbar>
-        <Table sx={{ minWidth: 430 }}>
+        <Table sx={{ minWidth: 480 }}>
           <TableHead>
             <TableRow>
               <TableCell width={40}>№</TableCell>
-
-              <TableCell>Даты оплаты</TableCell>
-
-              <TableCell align="center">Сумма оплаты</TableCell>
-
+              <TableCell>Дата оплаты</TableCell>
+              <TableCell align="center">Сумма</TableCell>
               <TableCell align="right">Оплачено</TableCell>
+              <TableCell align="center" width={130}>
+                Статус
+              </TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {contract?.paymentday?.map((row, index) => (
-              <TableRow key={index}>
-                <TableCell>{index + 1}</TableCell>
-
-                <TableCell>{row?.contract_payment_date}</TableCell>
-
-                <TableCell align="center">{fCurrency(row?.monthly_fee)}</TableCell>
-
-                <TableCell
-                  align="right"
+            {contract?.paymentday?.map((row, index) => {
+              const status = getPayDayStatus(row?.monthly_fee, row?.given_amount);
+              return (
+                <TableRow
+                  key={index}
                   sx={{
-                    color: row?.monthly_fee === row?.given_amount ? '#118D57' : '#B76E00',
-                    fontWeight: '700',
+                    '&:nth-of-type(odd)': {
+                      bgcolor: (theme) => alpha(theme.palette.grey[500], 0.04),
+                    },
                   }}
                 >
-                  {fCurrency(row?.given_amount)}
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell>{index + 1}</TableCell>
+
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{row?.contract_payment_date}</TableCell>
+
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                    {fCurrency(row?.monthly_fee)}
+                  </TableCell>
+
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                    <Stack spacing={0.5} alignItems="flex-end">
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          color:
+                            status.color === 'success'
+                              ? 'success.main'
+                              : status.color === 'warning'
+                                ? 'warning.main'
+                                : 'text.disabled',
+                        }}
+                      >
+                        {fCurrency(row?.given_amount)}
+                      </Typography>
+                      {status.color === 'warning' && (
+                        <LinearProgress
+                          variant="determinate"
+                          value={Math.min(status.percent, 100)}
+                          color="warning"
+                          sx={{ width: 80, height: 4, borderRadius: 1 }}
+                        />
+                      )}
+                    </Stack>
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <Label variant="soft" color={status.color}>
+                      {status.label}
+                    </Label>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </Scrollbar>
     </TableContainer>
   );
 
-  // eslint-disable-next-line no-unsafe-optional-chaining
-
   return (
     <Stack spacing={1}>
-      {/* <ContractToolbar
-        contract={contract}
-        invoice={invoice}
-        onChangeStatus={handleChangeStatus}
-        statusOptions={INVOICE_STATUS_OPTIONS}
-      /> */}
       {renderContractInfo}
 
       <ContractWidgets
@@ -559,13 +536,11 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
       <Grid container spacing={1}>
         <Grid xs={6}>
           <Card sx={{ py: 5, px: 5 }}>
-            {' '}
             {contract?.paymentday?.length ? paymentsDayList : <EmptyContent title="Нет данных" />}
           </Card>
         </Grid>
         <Grid xs={6}>
           <Card sx={{ py: 5, px: 5 }}>
-            {' '}
             {contract?.paymentlist?.length ? (
               <ContractPaymentListTable contract={contract} />
             ) : (

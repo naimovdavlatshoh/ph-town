@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
+import { alpha } from '@mui/material/styles';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
@@ -26,32 +29,18 @@ import { RenderCellCreatedAt } from '../checkerboard/client-table-row';
 
 // -------------------- Helpers --------------------
 
-const getStatusColor = (isDeleted, isTerminated, status) => {
-  if (isDeleted) return 'default';
-  if (isTerminated) return 'error';
-  if (status === '1') return 'warning';
-  if (status === '2') return 'success';
-  return 'default';
+const getStatusConfig = (isDeleted, isTerminated, status) => {
+  if (isDeleted) return { color: 'default', label: 'Удален', icon: 'solar:trash-bin-trash-bold' };
+  if (isTerminated) return { color: 'error', label: 'Расторгнут', icon: 'mdi:close-circle-outline' };
+  if (status === '1') return { color: 'warning', label: 'В процессе', icon: 'solar:clock-circle-bold' };
+  if (status === '2') return { color: 'success', label: 'Подтвержден', icon: 'solar:check-circle-bold' };
+  return { color: 'default', label: 'Не определен', icon: 'solar:question-circle-bold' };
 };
 
-const getStatusLabel = (isDeleted, isTerminated, status) => {
-  if (isDeleted) return 'Удален';
-  if (isTerminated) return 'Расторгнут';
-  if (status === '1') return 'В процессе';
-  if (status === '2') return 'Подтвержден';
-  return 'Не определен';
-};
-
-const getContractTypeColor = (type) => {
-  if (type === '1') return 'success';
-  if (type === '0') return 'warning';
-  return 'default';
-};
-
-const getContractTypeLabel = (type) => {
-  if (type === '1') return 'Рассрочка';
-  if (type === '0') return 'Наличка';
-  return 'Не определен';
+const getContractTypeConfig = (type) => {
+  if (type === '1') return { color: 'info', label: 'Рассрочка', icon: 'solar:calendar-bold' };
+  if (type === '0') return { color: 'success', label: 'Наличка', icon: 'solar:wad-of-money-bold' };
+  return { color: 'default', label: 'Не определен', icon: 'solar:question-circle-bold' };
 };
 
 // -------------------- Component --------------------
@@ -83,20 +72,6 @@ export default function ContractTableRow({
   const handleTooltipClose = () => setOpenComment(false);
   const handleTooltipOpen = () => setOpenComment(true);
 
-  const renderClientName = (client) => {
-    if (client?.client_type === '0') {
-      return `${client?.client_surname} ${client?.client_name || ''} ${
-        client?.client_fathername || ''
-      }`;
-    }
-    if (client?.client_type === '1') {
-      return `${client?.business_name}. Директор: ${
-        client?.business_director_name || 'Не заполнен'
-      }`;
-    }
-    return '';
-  };
-
   const confirm = useBoolean();
   const quickEdit = useBoolean();
   const popover = usePopover();
@@ -104,6 +79,31 @@ export default function ContractTableRow({
 
   const isDeleted = is_active === '0';
   const isTerminated = is_terminated === '1';
+  const isInactive = isDeleted || isTerminated;
+
+  const statusConfig = getStatusConfig(isDeleted, isTerminated, contract_status);
+  const typeConfig = getContractTypeConfig(contract_type);
+
+  const isBusiness = row?.client_type === '1';
+
+  const renderPrimaryName = () => {
+    if (row?.client_type === '0') {
+      return `${row?.client_surname || ''} ${row?.client_name || ''} ${
+        row?.client_fathername || ''
+      }`.trim();
+    }
+    if (isBusiness) {
+      return row?.business_name || 'Без названия';
+    }
+    return '—';
+  };
+
+  const renderSecondaryName = () => {
+    if (isBusiness) {
+      return `Директор: ${row?.business_director_name || 'Не заполнен'}`;
+    }
+    return 'Физическое лицо';
+  };
 
   const handleToggleSms = async (checked, contractId) => {
     const payload = {
@@ -130,104 +130,165 @@ export default function ContractTableRow({
     }
   };
 
+  const hasComment = Boolean(comments);
+
   return (
     <>
-      <TableRow hover selected={selected}>
+      <TableRow
+        hover
+        selected={selected}
+        sx={{
+          ...(isInactive && {
+            bgcolor: (theme) => alpha(theme.palette.grey[500], 0.04),
+          }),
+        }}
+      >
+        {/* Контракт */}
         <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          {['1', '2', '3'].includes(user?.role) ? (
-            <Typography sx={isDeleted || isTerminated ? { color: 'text.disabled' } : {}}>
-              {contract_number}
-            </Typography>
-          ) : (
-            <Typography
-              variant="body2"
-              sx={isDeleted || isTerminated ? { color: 'text.disabled' } : {}}
-            >
-              {contract_number}
-            </Typography>
-          )}
-        </TableCell>
-
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          <Link
-            component={RouterLink}
-            href={paths.dashboard.clients.details(row?.client_id)}
-            sx={isDeleted || isTerminated ? { color: 'text.disabled' } : {}}
+          <Typography
+            variant="subtitle2"
+            sx={{ color: isInactive ? 'text.disabled' : 'text.primary' }}
           >
-            {renderClientName(row)}
-          </Link>
+            {contract_number}
+          </Typography>
         </TableCell>
 
+        {/* Клиент */}
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+          <Stack spacing={0.25}>
+            <Link
+              component={RouterLink}
+              href={paths.dashboard.clients.details(row?.client_id)}
+              color="inherit"
+              sx={{
+                typography: 'subtitle2',
+                cursor: 'pointer',
+                color: isInactive ? 'text.disabled' : 'text.primary',
+                '&:hover': { textDecoration: 'underline' },
+              }}
+            >
+              {renderPrimaryName()}
+            </Link>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {renderSecondaryName()}
+            </Typography>
+          </Stack>
+        </TableCell>
+
+        {/* Состояние */}
         <TableCell>
           <Label
             variant="soft"
-            color={getStatusColor(isDeleted, isTerminated, contract_status)}
-            sx={isDeleted || isTerminated ? { color: 'text.disabled' } : {}}
+            color={statusConfig.color}
+            startIcon={<Iconify icon={statusConfig.icon} />}
           >
-            {getStatusLabel(isDeleted, isTerminated, contract_status)}
+            {statusConfig.label}
           </Label>
         </TableCell>
 
+        {/* Тип */}
         <TableCell>
-          <Label variant="soft" color={getContractTypeColor(contract_type)}>
-            {getContractTypeLabel(contract_type)}
+          <Label
+            variant="soft"
+            color={typeConfig.color}
+            startIcon={<Iconify icon={typeConfig.icon} />}
+          >
+            {typeConfig.label}
           </Label>
         </TableCell>
 
+        {/* Файл */}
         <TableCell>
-          <IconButton onClick={onPreviewDocument} disabled={isDeleted || isTerminated}>
-            <Iconify icon="material-symbols:contract-outline" />
-          </IconButton>
+          <Tooltip title="Просмотр документа" placement="top" arrow>
+            <Box component="span">
+              <IconButton
+                onClick={onPreviewDocument}
+                disabled={isInactive}
+                sx={{
+                  color: 'primary.main',
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                  '&:hover': {
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.16),
+                  },
+                }}
+              >
+                <Iconify icon="material-symbols:contract-outline" />
+              </IconButton>
+            </Box>
+          </Tooltip>
         </TableCell>
 
-        <TableCell>
+        {/* Комментарий */}
+        <TableCell align="center">
           <Tooltip
             PopperProps={{ disablePortal: true }}
             onClose={handleTooltipClose}
             open={openComment}
             title={comments || 'Нет комментариев'}
+            arrow
           >
-            <Iconify color="orange" icon="ic:baseline-comment" onClick={handleTooltipOpen} />
+            <IconButton
+              size="small"
+              onMouseEnter={handleTooltipOpen}
+              onMouseLeave={handleTooltipClose}
+              onClick={handleTooltipOpen}
+            >
+              <Iconify
+                icon={hasComment ? 'solar:chat-round-dots-bold' : 'solar:chat-round-line-duotone'}
+                sx={{ color: hasComment ? 'warning.main' : 'text.disabled' }}
+              />
+            </IconButton>
           </Tooltip>
         </TableCell>
 
+        {/* Создано */}
         <TableCell>
           <RenderCellCreatedAt params={{ row: { createdAt: created_at } }} />
         </TableCell>
 
+        {/* Действия */}
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
-          <Tooltip title="Детали" placement="top" arrow>
-            <IconButton
-              disabled={isDeleted}
-              color={quickEdit.value ? 'inherit' : 'default'}
-              component={RouterLink}
-              href={paths.dashboard.contracts.details(contract_id)}
-            >
-              <Iconify icon="lets-icons:view" />
-            </IconButton>
-          </Tooltip>
+          <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={0.5}>
+            <Tooltip title="Детали" placement="top" arrow>
+              <Box component="span">
+                <IconButton
+                  disabled={isDeleted}
+                  color={quickEdit.value ? 'inherit' : 'default'}
+                  component={RouterLink}
+                  href={paths.dashboard.contracts.details(contract_id)}
+                >
+                  <Iconify icon="lets-icons:view" />
+                </IconButton>
+              </Box>
+            </Tooltip>
 
-          {['1', '2'].includes(user?.role) && (
-            <IconButton
-              disabled={isDeleted || isTerminated}
-              color={popover.open ? 'inherit' : 'default'}
-              onClick={popover.onOpen}
-            >
-              <Iconify icon="eva:more-vertical-fill" />
-            </IconButton>
-          )}
+            {['1', '2'].includes(user?.role) && (
+              <IconButton
+                disabled={isInactive}
+                color={popover.open ? 'inherit' : 'default'}
+                onClick={popover.onOpen}
+              >
+                <Iconify icon="eva:more-vertical-fill" />
+              </IconButton>
+            )}
 
-          <Switch
-            disabled={isDeleted || contract_status !== '2' || is_terminated === 1}
-            defaultChecked={send_an_sms === '1' && !isDeleted && !isTerminated}
-            onChange={(event) => handleToggleSms(event.target.checked, contract_id)}
-          />
+            <Tooltip title="Отправка SMS" placement="top" arrow>
+              <Box component="span">
+                <Switch
+                  size="small"
+                  disabled={isDeleted || contract_status !== '2' || is_terminated === 1}
+                  defaultChecked={send_an_sms === '1' && !isInactive}
+                  onChange={(event) => handleToggleSms(event.target.checked, contract_id)}
+                />
+              </Box>
+            </Tooltip>
+          </Stack>
         </TableCell>
       </TableRow>
 
       <UserQuickEditForm currentUser={row} open={quickEdit.value} onClose={quickEdit.onFalse} />
 
-      {!isDeleted && !isTerminated && (
+      {!isInactive && (
         <CustomPopover
           open={popover.open}
           onClose={popover.onClose}
