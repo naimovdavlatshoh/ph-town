@@ -161,7 +161,7 @@ export default function PaymentsNewForm({
         },
         () => {
           refresh();
-          enqueueSnackbar('Олпата прошла успешна!');
+          enqueueSnackbar('Оплата прошла успешно!');
           handleClose();
         }
       );
@@ -314,7 +314,7 @@ export default function PaymentsNewForm({
         InputLabelProps={{ shrink: true }}
       >
         {PAYMENT_METHODS_OPTIONS.map((el, idx) => (
-          <MenuItem key={el.idx} value={el.payment_method}>
+          <MenuItem key={el.payment_method} value={el.payment_method}>
             <Stack width="100%" direction="row" alignItems="center" justifyContent="space-between">
               <Typography variant="caption"> {el.label}</Typography>
             </Stack>
@@ -401,7 +401,7 @@ export default function PaymentsNewForm({
           InputLabelProps={{ shrink: true }}
         >
           {methods.watch('client')?.contracts?.map((el, idx) => (
-            <MenuItem key={el.idx} value={el.contract_id}>
+            <MenuItem key={el.contract_id} value={el.contract_id}>
               <Stack
                 width="100%"
                 direction="row"
@@ -446,7 +446,7 @@ export default function PaymentsNewForm({
           fullWidth
         >
           {PAYMENT_METHODS_OPTIONS.map((el, idx) => (
-            <MenuItem key={el.idx} value={el.payment_method}>
+            <MenuItem key={el.payment_method} value={el.payment_method}>
               <Stack
                 width="100%"
                 direction="row"

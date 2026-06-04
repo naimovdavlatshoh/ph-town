@@ -3,8 +3,8 @@ import * as Yup from 'yup';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useForm, Controller } from 'react-hook-form';
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { useForm, Controller, useFormContext } from 'react-hook-form';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -51,7 +51,7 @@ export default function ClientNewEditForm({ currentClient }) {
   const [clientFileId, setClientFileId] = useState();
   const [passportType, setPassportType] = useState('0');
 
-  const { control } = useFormContext;
+  // const { control } = useFormContext;
 
   const [typeEntity, setTypeEntity] = useState('individual');
 
@@ -163,7 +163,13 @@ export default function ClientNewEditForm({ currentClient }) {
           ) || null,
       address_by_passport: currentClient?.address_by_passport || '',
       place_of_work: currentClient?.place_of_work || '',
-      file: currentClient?.file_path || '',
+      file: currentClient?.file_path
+        ? {
+            preview: currentClient.file_path,
+            name: currentClient.file_name || currentClient.file_path,
+            type: 'application/pdf',
+          }
+        : null,
       phones:
         currentClient?.phone_option.length &&
         currentClient?.phone_option?.map((phone) => ({
@@ -182,6 +188,7 @@ export default function ClientNewEditForm({ currentClient }) {
       currentClient?.date_of_issue,
       currentClient?.file_path,
       currentClient?.given_by,
+      currentClient?.file_name,
       currentClient?.passport_series,
       currentClient?.phone_option,
       currentClient?.pinfl,
@@ -206,7 +213,13 @@ export default function ClientNewEditForm({ currentClient }) {
         null,
       business_address: currentClient?.business_address || '',
       business_bank_number: currentClient?.business_bank_number || '',
-      file: currentClient?.file_path || '',
+      file: currentClient?.file_path
+        ? {
+            preview: currentClient.file_path,
+            name: currentClient.file_name || currentClient.file_path,
+            type: 'application/pdf',
+          }
+        : null,
       phones:
         currentClient?.phone_option.length &&
         currentClient?.phone_option?.map((phone) => ({
@@ -225,6 +238,7 @@ export default function ClientNewEditForm({ currentClient }) {
       currentClient?.business_name,
       currentClient?.business_region,
       currentClient?.file_path,
+      currentClient?.file_name,
       currentClient?.phone_option,
       regions,
     ]
@@ -454,7 +468,7 @@ export default function ClientNewEditForm({ currentClient }) {
         <Stack sx={{ p: 3 }} spacing={1}>
           <Typography variant="subtitle2">Тип клиента</Typography>
           <ToggleButtonGroup
-            disabled={currentClient}
+            disabled={!!currentClient}
             exclusive
             value={typeEntity}
             size="small"
@@ -903,7 +917,6 @@ export default function ClientNewEditForm({ currentClient }) {
 
                 <Controller
                   name="date_of_issue"
-                  control={control}
                   render={({ field, fieldState: { error } }) => (
                     <DatePicker
                       label="Дата выдачи"
@@ -923,7 +936,6 @@ export default function ClientNewEditForm({ currentClient }) {
                 />
                 <Controller
                   name="expire_date"
-                  control={control}
                   render={({ field, fieldState: { error } }) => (
                     <DatePicker
                       label="Срок действия"
@@ -947,7 +959,6 @@ export default function ClientNewEditForm({ currentClient }) {
               <Stack spacing={2}>
                 <Controller
                   name="date_of_birth"
-                  control={control}
                   render={({ field, fieldState: { error } }) => (
                     <DatePicker
                       label="Дата рождения"

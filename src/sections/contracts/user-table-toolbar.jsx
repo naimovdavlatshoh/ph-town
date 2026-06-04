@@ -60,10 +60,12 @@ export default function UserTableToolbar({
           <InputLabel>Типы оплаты</InputLabel>
 
           <Select
-            value={filters.contractType}
+            value={filters.contractType.value}
             onChange={handleContractType}
             input={<OutlinedInput label="Типы оплаты" />}
-            renderValue={(selected) => selected?.label}
+            renderValue={(selected) =>
+              contractTypeOptions.find((option) => option.value === selected)?.label
+            }
             MenuProps={{
               PaperProps: {
                 sx: { maxHeight: 240 },
@@ -71,7 +73,7 @@ export default function UserTableToolbar({
             }}
           >
             {contractTypeOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value} selected>
+              <MenuItem key={option.value} value={option.value}>
                 {option.label}
               </MenuItem>
             ))}

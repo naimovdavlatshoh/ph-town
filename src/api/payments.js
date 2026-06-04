@@ -228,7 +228,7 @@ export function useGetKassaSklad(page = 1, startdate = '', enddate = '', clientI
   const memoizedValue = useMemo(
     () => ({
       kassSklad: data?.option?.length ? data?.option : [],
-      count: data?.count || 0,
+      count: Number(data?.count) || 0,
       cashInformation: data?.cash_information?.length ? data?.cash_information : [],
       kassSkladLoading: isLoading,
       kassSkladError: error,

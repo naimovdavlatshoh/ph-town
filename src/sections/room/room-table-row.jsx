@@ -63,6 +63,10 @@ export default function RoomTableRow({
 
   const { user } = useAuthContext();
 
+  useEffect(() => {
+    setLocalStockStatus(stock_status);
+  }, [stock_status]);
+
   useEffect(
     () => () => {
       setSelectedId(null);
@@ -178,23 +182,19 @@ export default function RoomTableRow({
             arrow
           >
             <IconButton
-              color={quickEdit.value ? 'inherit' : 'default'}
-              onClick={
-                layout_image
-                  ? () => {
-                      sestSelectedLayoutSrc(layout_image);
-                      layerModal.onTrue();
-                    }
-                  : null
-              }
+              disabled={!layout_image}
+              onClick={() => {
+                sestSelectedLayoutSrc(layout_image);
+                layerModal.onTrue();
+              }}
             >
               <Iconify color="#02b9da" icon="mingcute:layout-11-fill" />
             </IconButton>
           </Tooltip>
 
           <Switch
-            disabled={!['1', '5'].includes(stock_status)}
-            defaultChecked={stock_status !== '5'}
+            disabled={!['1', '5'].includes(localStockStatus)}
+            checked={localStockStatus !== '5'}
             onChange={() => updateApartmentStockStatus()}
           />
 

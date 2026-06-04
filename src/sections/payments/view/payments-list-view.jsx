@@ -561,7 +561,7 @@ export default function PaymentsListView() {
           </TableContainer>
 
           <TablePaginationCustom
-            count={count}
+            count={Number(count) || 0}
             page={page}
             rowsPerPage={30}
             rowsPerPageOptions={[]}

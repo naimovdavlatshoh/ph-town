@@ -57,20 +57,20 @@ export default function ClientPhonesListForm({ isNew = true }) {
           <Stack key={item.id} alignItems="flex-end" spacing={0.5}>
             <Stack direction="row" spacing={1} sx={{ width: 1 }}>
               <RHFPhoneField name={`phones[${index}].phone_number`} label="Номер телефона" />
-              <Tooltip title="Сделать основным?">
-                <Controller
-                  name={`phones[${index}].isMain`}
-                  control={control}
-                  render={({ field, fieldState: { error } }) => (
+              <Controller
+                name={`phones[${index}].isMain`}
+                control={control}
+                render={({ field }) => (
+                  <Tooltip title="Сделать основным?">
                     <Checkbox
-                      checked={field.value}
                       {...field}
+                      checked={field.value}
                       disabled={values.phones.length === 1}
                       onChange={() => handleToggleMain(index)}
                     />
-                  )}
-                />
-              </Tooltip>
+                  </Tooltip>
+                )}
+              />
             </Stack>
             {values.phones.length !== 1 && isNew && (
               <Button

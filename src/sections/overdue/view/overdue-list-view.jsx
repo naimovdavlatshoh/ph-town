@@ -571,18 +571,15 @@ export default function OverdueListView() {
                 />
 
                 <TableBody>
-                  {overduedays.map((row) => (
+                  {overduedays.map((row, index) => (
                     <OverdueTableRow
-                      key={row.contract_id}
+                      key={`${row.contract_id}-${index}`}
                       row={row}
                       onSelectRow={() => {}}
                       onPreviewDocument={() => onPreviewDocument(row.contract_id)}
-                      // onDeleteRow={(id) => onOpenDeleteModal(id)}
                       onEditRow={() => {}}
                     />
                   ))}
-
-                  {/* <TableNoData notFound={notFound} /> */}
                 </TableBody>
               </Table>
             </Scrollbar>

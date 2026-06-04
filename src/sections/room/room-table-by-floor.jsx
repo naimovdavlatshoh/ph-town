@@ -103,7 +103,7 @@ function RoomTableByFloor({ floorId, projectId }) {
   const denseHeight = table.dense ? 56 : 56 + 20;
   const canReset = !isEqual(defaultFilters, filters);
 
-  const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
+  const notFound = !dataFiltered.length;
 
   const handleDeleteRows = useCallback(() => {
     const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
@@ -177,9 +177,9 @@ function RoomTableByFloor({ floorId, projectId }) {
             />
 
             <TableBody>
-              {apartments.map((apartment) => (
+              {dataInPage.map((apartment) => (
                 <RoomTableRow
-                  key={apartment.id}
+                  key={apartment.apartment_id}
                   row={apartment}
                   onEditRow={handleEditRow}
                   handleDeleteConfirm={handleConfirmDeleteRow}

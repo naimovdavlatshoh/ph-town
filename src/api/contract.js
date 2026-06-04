@@ -33,77 +33,169 @@ export function useGetContracts(page = 1, contractStatus = '', contractType = ''
 
   const { data, isLoading, error, isValidating } = useSWR(`${URL}?${query}`, fetcher);
 
+  // const create = useCallback(
+  //   async (newContract, cb) => {
+  //     if (!newContract) {
+  //       return false;
+  //     }
+  //     const result = await axios.post(CREATE_URL, newContract);
+
+  //     cb();
+  //     return mutate(URL, { ...data, option: [result.data, ...data.option] }, false);
+  //   },
+  //   [CREATE_URL, URL, data]
+  // );
   const create = useCallback(
     async (newContract, cb) => {
-      if (!newContract) {
-        return false;
-      }
+      if (!newContract) return false;
+
       const result = await axios.post(CREATE_URL, newContract);
 
-      cb();
-      return mutate(URL, { ...data, option: [result.data, ...data.option] }, false);
+      // Пробрасываем ответ backend наружу — чтобы форма получила contract_id
+      cb?.(result.data);
+
+      // data может быть undefined, если список ещё не загружен — защищаемся
+      if (data?.option) {
+        mutate(URL, { ...data, option: [result.data, ...data.option] }, false);
+      } else {
+        mutate(URL);
+      }
+
+      return result.data;
     },
     [CREATE_URL, URL, data]
   );
 
+  // const createWithPlan = useCallback(
+  //   async (newContract, cb) => {
+  //     if (!newContract) {
+  //       return false;
+  //     }
+  //     const result = await axios.post(CREATE_WITH_PLAN_URL, newContract);
+
+  //     cb();
+  //     return mutate(URL, { ...data, option: [result.data, ...data.option] }, false);
+  //   },
+  //   [CREATE_WITH_PLAN_URL, URL, data]
+  // );
   const createWithPlan = useCallback(
     async (newContract, cb) => {
-      if (!newContract) {
-        return false;
-      }
+      if (!newContract) return false;
+
       const result = await axios.post(CREATE_WITH_PLAN_URL, newContract);
 
-      cb();
-      return mutate(URL, { ...data, option: [result.data, ...data.option] }, false);
+      cb?.(result.data);
+
+      if (data?.option) {
+        mutate(URL, { ...data, option: [result.data, ...data.option] }, false);
+      } else {
+        mutate(URL);
+      }
+
+      return result.data;
     },
     [CREATE_WITH_PLAN_URL, URL, data]
   );
 
+  // const update = useCallback(
+  //   async (contract, cb) => {
+  //     if (!contract) {
+  //       return false;
+  //     }
+
+  //     mutate(URL, { ...data, contractsLoading: true }, false);
+
+  //     const result = await axios.post(UPDATE_URL, contract);
+
+  //     cb();
+  //     return mutate(
+  //       URL,
+  //       {
+  //         ...data,
+  //         option: data.option.map(
+  //           (c) => (c.contract_id === result.data?.contract_id ? result.data : c),
+  //           false
+  //         ),
+  //       },
+  //       false
+  //     );
+  //   },
+  //   [UPDATE_URL, URL, data]
+  // );
   const update = useCallback(
     async (contract, cb) => {
-      if (!contract) {
-        return false;
-      }
-
-      mutate(URL, { ...data, contractsLoading: true }, false);
+      if (!contract) return false;
 
       const result = await axios.post(UPDATE_URL, contract);
 
-      cb();
-      return mutate(
-        URL,
-        {
-          ...data,
-          option: data.option.map(
-            (c) => (c.contract_id === result.data?.contract_id ? result.data : c),
-            false
-          ),
-        },
-        false
-      );
+      cb?.(result.data);
+
+      if (data?.option) {
+        mutate(
+          URL,
+          {
+            ...data,
+            option: data.option.map((c) =>
+              c.contract_id === result.data?.contract_id ? result.data : c
+            ),
+          },
+          false
+        );
+      } else {
+        mutate(URL);
+      }
+
+      return result.data;
     },
     [UPDATE_URL, URL, data]
   );
 
+  // const updateWithPlan = useCallback(
+  //   async (contract, cb) => {
+  //     if (!contract) {
+  //       return false;
+  //     }
+  //     const result = await axios.post(UPDATE_WITH_PLAN_URL, contract);
+
+  //     cb();
+  //     return mutate(
+  //       URL,
+  //       {
+  //         ...data,
+  //         option: data.option.map(
+  //           (c) => (c.contract_id === result.data?.contract_id ? result.data : c),
+  //           false
+  //         ),
+  //       },
+  //       false
+  //     );
+  //   },
+  //   [UPDATE_WITH_PLAN_URL, URL, data]
+  // );
   const updateWithPlan = useCallback(
     async (contract, cb) => {
-      if (!contract) {
-        return false;
-      }
+      if (!contract) return false;
+
       const result = await axios.post(UPDATE_WITH_PLAN_URL, contract);
 
-      cb();
-      return mutate(
-        URL,
-        {
-          ...data,
-          option: data.option.map(
-            (c) => (c.contract_id === result.data?.contract_id ? result.data : c),
-            false
-          ),
-        },
-        false
-      );
+      cb?.(result.data);
+
+      if (data?.option) {
+        mutate(
+          URL,
+          {
+            ...data,
+            option: data.option.map((c) =>
+              c.contract_id === result.data?.contract_id ? result.data : c
+            ),
+          },
+          false
+        );
+      } else {
+        mutate(URL);
+      }
+
+      return result.data;
     },
     [UPDATE_WITH_PLAN_URL, URL, data]
   );
@@ -181,7 +273,7 @@ export function useGetContracts(page = 1, contractStatus = '', contractType = ''
   const memoizedValue = useMemo(
     () => ({
       contracts: data?.option || [],
-      count: data?.count || 0,
+      count: Number(data?.count) || 0,
       countConfirmed: data?.confirmed_count || 0,
       countProcess: data?.process_count || 0,
       page: data?.page || 1,

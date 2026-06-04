@@ -163,7 +163,13 @@ export default function ClientNewEditForm({ currentClient }) {
           ) || null,
       address_by_passport: currentClient?.address_by_passport || '',
       place_of_work: currentClient?.place_of_work || '',
-      file: currentClient?.file_path || '',
+      file: currentClient?.file_path
+        ? {
+            preview: currentClient.file_path,
+            name: currentClient.file_name || currentClient.file_path,
+            type: 'application/pdf',
+          }
+        : null,
       phones:
         currentClient?.phone_option.length &&
         currentClient?.phone_option?.map((phone) => ({
@@ -187,6 +193,7 @@ export default function ClientNewEditForm({ currentClient }) {
       currentClient?.pinfl,
       currentClient?.place_of_work,
       currentClient?.region_by_passport,
+      currentClient.file_name,
       regions,
     ]
   );
@@ -206,7 +213,13 @@ export default function ClientNewEditForm({ currentClient }) {
         null,
       business_address: currentClient?.business_address || '',
       business_bank_number: currentClient?.business_bank_number || '',
-      file: currentClient?.file_path || '',
+      file: currentClient?.file_path
+        ? {
+            preview: currentClient.file_path,
+            name: currentClient.file_name || currentClient.file_path,
+            type: 'application/pdf',
+          }
+        : null,
       phones:
         currentClient?.phone_option.length &&
         currentClient?.phone_option?.map((phone) => ({
@@ -225,6 +238,7 @@ export default function ClientNewEditForm({ currentClient }) {
       currentClient?.business_name,
       currentClient?.business_region,
       currentClient?.file_path,
+      currentClient?.file_name,
       currentClient?.phone_option,
       regions,
     ]
@@ -455,7 +469,7 @@ export default function ClientNewEditForm({ currentClient }) {
         <Stack sx={{ p: 3 }} spacing={1}>
           <Typography variant="subtitle2">Тип клиента</Typography>
           <ToggleButtonGroup
-            disabled={currentClient}
+            disabled={!!currentClient}
             exclusive
             value={typeEntity}
             size="small"

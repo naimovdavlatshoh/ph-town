@@ -81,7 +81,7 @@ export default function ClientDetailsToolbar({
 
 ClientDetailsToolbar.propTypes = {
   backLink: PropTypes.string,
-  createdAt: PropTypes.instanceOf(Date),
+  createdAt: PropTypes.oneOfType([PropTypes.instanceOf(Date), PropTypes.string]),
   orderNumber: PropTypes.string,
   entityType: PropTypes.string,
   clientId: PropTypes.string,

@@ -42,12 +42,14 @@ export default function ClientPhonesListForm() {
                 <Controller
                   name={`phones[${index}].isMain`}
                   control={control}
-                  render={({ field, fieldState: { error } }) => (
-                    <Checkbox
-                      checked={field.value}
-                      {...field}
-                      disabled={values.phones.filter((phone) => phone.isMain).length === 1}
-                    />
+                  render={({ field }) => (
+                    <Tooltip title="Сделать основным?">
+                      <Checkbox
+                        {...field}
+                        checked={field.value}
+                        disabled={values.phones.filter((phone) => phone.isMain).length === 1}
+                      />
+                    </Tooltip>
                   )}
                 />
               </Tooltip>

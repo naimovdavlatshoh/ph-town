@@ -155,7 +155,7 @@ export default function ClientListView() {
       hideable: false,
       renderCell: (params) => (
         <Link component={RouterLink} href={paths.dashboard.clients.details(params?.row?.client_id)}>
-          {params.row.client_type === '0'
+          {Number(params.row.client_type) === 0
             ? `${params.row.client_surname || ''} ${params.row.client_name || ''} ${
                 params.row.client_fathername || ''
               } `
@@ -179,7 +179,7 @@ export default function ClientListView() {
       minWidth: 160,
       flex: 1,
       renderCell: (params) =>
-        params.row.client_type === '0'
+        Number(params.row.client_type) === 0
           ? `${params.row.city_by_passport}. ${params.row.address_by_passport}`
           : `${params.row.business_city}. ${params.row.business_address}`,
     },
@@ -193,7 +193,11 @@ export default function ClientListView() {
       renderCell: (params) => (
         <Stack>
           {params?.row?.phone_option?.map((phone) => (
-            <Typography variant="body2" color={phone?.is_main === '1' && 'primary'}>
+            <Typography
+              key={phone.phone_id} 
+              variant="body2"
+              color={phone?.is_main === '1' ? 'primary' : undefined}
+            >
               {phone?.phone_number}
             </Typography>
           ))}
@@ -388,7 +392,7 @@ export default function ClientListView() {
                 labelDisplayedRows: (paginationInfo) =>
                   `${paginationInfo.from}-${paginationInfo.to} из ${paginationInfo.count}`,
                 page,
-                count,
+                count: Number(count) || 0, // ← привести к числу
                 onPageChange: (_, nextPage) => navigate(`/dashboard/clients/${nextPage}`),
               },
             }}

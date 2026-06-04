@@ -42,7 +42,6 @@ import {
 
 import OverdueTableRow from './overdue-table-row';
 
-
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@/build/pdf.worker.js`;
 
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
@@ -166,18 +165,19 @@ export default function ContractOverduesFullscreen({ open, handleClose }) {
             />
 
             <TableBody>
-              {overduedays?.map((row) => (
-                <OverdueTableRow
-                  key={row.id}
-                  row={row}
-                  onSelectRow={() => {}}
-                  onPreviewDocument={() => {}}
-                  onDeleteRow={() => {}}
-                  onEditRow={() => {}}
-                />
-              ))}
-
-              <TableNoData notFound={notFound} />
+              <>
+                {overduedays?.map((row, index) => (
+                  <OverdueTableRow
+                    key={`${row.contract_id}-${index}`}
+                    row={row}
+                    onSelectRow={() => {}}
+                    onPreviewDocument={() => {}}
+                    onDeleteRow={() => {}}
+                    onEditRow={() => {}}
+                  />
+                ))}
+                {notFound && <TableNoData notFound={notFound} />}
+              </>
             </TableBody>
           </Table>
         </Scrollbar>

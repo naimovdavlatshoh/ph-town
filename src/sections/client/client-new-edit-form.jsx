@@ -35,7 +35,6 @@ import FormProvider, { RHFUpload, RHFTextField, RHFAutocomplete } from 'src/comp
 
 import ClientPhonesListForm from './client-phones-list-form';
 
-
 // ----------------------------------------------------------------------
 
 export default function ClientNewEditForm({ currentClient }) {
@@ -98,7 +97,7 @@ export default function ClientNewEditForm({ currentClient }) {
     city_by_passport: Yup.object().nullable().required('Заполните поле'),
     address_by_passport: Yup.string().required('Заполните поле'),
     place_of_work: Yup.string().required('Заполните поле'),
-    file: Yup.string().required('Загрузите сканер документа'),
+    file: Yup.mixed().required('Загрузите сканер документа'),
     phones: Yup.lazy(() =>
       Yup.array().of(
         Yup.object({
@@ -130,7 +129,7 @@ export default function ClientNewEditForm({ currentClient }) {
       .required('Заполните поле'),
     date_of_issue: Yup.string().required('Выберите дату'),
     given_by: Yup.string().required('Заполните поле'),
-    file: Yup.string().required('Загрузите сканер документа'),
+    file: Yup.mixed().required('Загрузите сканер документа'),
     phones: Yup.lazy(() =>
       Yup.array().of(
         Yup.object({
@@ -176,7 +175,7 @@ export default function ClientNewEditForm({ currentClient }) {
           ) || null,
       address_by_passport: currentClient?.address_by_passport || '',
       place_of_work: currentClient?.place_of_work || '',
-      file: currentClient?.file_path || '',
+      file: currentClient?.file_path ? { preview: currentClient.file_path } : null,
       phones:
         currentClient?.phone_option.length &&
         currentClient?.phone_option?.map((phone) => ({
@@ -231,7 +230,7 @@ export default function ClientNewEditForm({ currentClient }) {
         ? moment(currentClient?.date_of_issue).toDate()
         : '',
       given_by: currentClient?.given_by || '',
-      file: currentClient?.file_path || '',
+      file: currentClient?.file_path ? { preview: currentClient.file_path } : null,
       phones:
         currentClient?.phone_option.length &&
         currentClient?.phone_option?.map((phone) => ({
@@ -490,7 +489,7 @@ export default function ClientNewEditForm({ currentClient }) {
         <Stack sx={{ p: 3 }} spacing={1}>
           <Typography variant="subtitle2">Тип клиента</Typography>
           <ToggleButtonGroup
-            disabled={currentClient}
+            disabled={!!currentClient}
             exclusive
             value={typeEntity}
             size="small"
@@ -804,6 +803,7 @@ export default function ClientNewEditForm({ currentClient }) {
                   fullWidth
                   options={regions.map((option) => option)}
                   getOptionLabel={(option) => option.region_name || ''}
+                  isOptionEqualToValue={(option, value) => option.region_id === value.region_id}
                 />
                 <RHFTextField
                   name="address_by_passport"
@@ -826,6 +826,7 @@ export default function ClientNewEditForm({ currentClient }) {
                     watchPersonal('region_by_passport')?.districts?.map((option) => option) || []
                   }
                   getOptionLabel={(option) => option.district_name || ''}
+                  isOptionEqualToValue={(option, value) => option.district_id === value.district_id}
                 />
                 <RHFTextField name="place_of_work" label="Место работы" multiline rows={2} />
               </Stack>

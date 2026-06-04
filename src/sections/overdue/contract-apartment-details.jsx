@@ -509,12 +509,14 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
         </Grid>
       </Grid>
 
-      <PaymentsNewForm
-        open={paymentDialog.value}
-        onClose={paymentDialog.onFalse}
-        data={contract}
-        onCreate={create}
-      />
+      {contract && (
+        <PaymentsNewForm
+          open={paymentDialog.value}
+          onClose={paymentDialog.onFalse}
+          data={contract}
+          onCreate={create}
+        />
+      )}
     </Stack>
   );
 }

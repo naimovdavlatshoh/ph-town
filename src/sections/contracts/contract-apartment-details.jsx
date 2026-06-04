@@ -68,6 +68,7 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
   const { enqueueSnackbar } = useSnackbar();
   const [loadingUploadFile, setLoadingUploadFile] = useState(false);
   const [loadingExcelFile, setLoadingExcelFile] = useState(false);
+  const [loadingWord, setLoadingWord] = useState(false);
   const [file, setFile] = useState();
 
   const { user } = useAuthContext();
@@ -182,6 +183,50 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
       });
     } finally {
       setLoadingExcelFile(false);
+    }
+  };
+
+  const downloadWord = async () => {
+    setLoadingWord(true);
+    try {
+      // Берём JWT. Проверь ключ хранилища — у minimals обычно 'accessToken'.
+      const accessToken =
+        sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
+
+      // Запрос на ВНЕШНИЙ домен. Используем нативный fetch, чтобы не цеплять
+      // baseURL и интерсепторы основного axios-инстанса.
+      const response = await fetch('https://contractfile.ph.town/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ contract_id: contract?.contract_id }),
+      });
+
+      const result = await response.json();
+
+      // Сервер сам сообщает об ошибке через success:false
+      if (!result?.success) {
+        enqueueSnackbar(result?.message || 'Не удалось сгенерировать файл', {
+          variant: 'error',
+        });
+        return;
+      }
+
+      if (!result?.url) {
+        enqueueSnackbar('Ссылка для скачивания не получена', { variant: 'error' });
+        return;
+      }
+
+      // Скачиваем файл по полученной ссылке
+      saveAs(result.url, `Контракт-${contract?.contract_number || contract?.contract_id}.docx`);
+      enqueueSnackbar('Файл успешно загружен!', { variant: 'success' });
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('Ошибка при генерации файла', { variant: 'error' });
+    } finally {
+      setLoadingWord(false);
     }
   };
 
@@ -305,10 +350,31 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
               </Box>
             </Stack>
           )}
+          {['1', '2'].includes(user?.role) && (
+            <Stack
+              onClick={downloadWord}
+              component={ButtonBase}
+              disabled={loadingWord}
+              alignItems="center"
+              width={100}
+              height={50}
+              sx={{
+                background: loadingWord ? '#1877f233' : '#1877f2',
+                py: 1,
+                px: 1,
+                borderRadius: 0.5,
+              }}
+              direction="row"
+            >
+              <Iconify icon="vscode-icons:file-type-word" sx={{ width: 40, color: '#ffff' }} />
+              <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
+                {loadingWord ? 'Создаём...' : 'Word'}
+              </Box>
+            </Stack>
+          )}
           <Stack
             onClick={exportToExcel}
             component={ButtonBase}
-            loading={loadingExcelFile}
             alignItems="center"
             width={100}
             height={50}
@@ -323,7 +389,7 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
             <Iconify icon="healthicons:excel-logo" sx={{ width: 40, color: '#ffff' }} />
             {['1', '2'].includes(user?.role) && (
               <Box component="span" sx={{ color: '#fff', typography: 'body2' }}>
-                Скачать
+                Excel
               </Box>
             )}
           </Stack>
@@ -491,13 +557,13 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
       />
 
       <Grid container spacing={1}>
-        <Grid item xs={6}>
+        <Grid xs={6}>
           <Card sx={{ py: 5, px: 5 }}>
             {' '}
             {contract?.paymentday?.length ? paymentsDayList : <EmptyContent title="Нет данных" />}
           </Card>
         </Grid>
-        <Grid item xs={6}>
+        <Grid xs={6}>
           <Card sx={{ py: 5, px: 5 }}>
             {' '}
             {contract?.paymentlist?.length ? (
@@ -509,12 +575,14 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
         </Grid>
       </Grid>
 
-      <PaymentsNewForm
-        open={paymentDialog.value}
-        onClose={paymentDialog.onFalse}
-        data={contract}
-        onCreate={create}
-      />
+      {contract && (
+        <PaymentsNewForm
+          open={paymentDialog.value}
+          onClose={paymentDialog.onFalse}
+          data={contract}
+          onCreate={create}
+        />
+      )}
     </Stack>
   );
 }
