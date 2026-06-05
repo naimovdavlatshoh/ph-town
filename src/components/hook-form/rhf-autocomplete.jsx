@@ -20,12 +20,12 @@ import Iconify from 'src/components/iconify';
 import Label from '../label';
 
 const renderClientName = (client) => {
-  if (client?.client_type === '0') {
-    return `${client?.client_surname} ${client?.client_name || ''} ${
+  if (String(client?.client_type) === '0') {
+    return `${client?.client_surname || ''} ${client?.client_name || ''} ${
       client?.client_fathername || ''
-    }`;
+    }`.trim();
   }
-  if (client?.client_type === '1') {
+  if (String(client?.client_type) === '1') {
     return `"${client?.business_name}". Директор: ${
       client?.business_director_name || 'Не заполнен'
     }`;
@@ -376,7 +376,7 @@ export default function RHFAutocomplete({
                     <Typography variant="caption">{option?.counterparty_name}</Typography>
                     <Typography variant="caption">
                       {' '}
-                      {option?.client_type === '1' ? (
+                      {String(option?.client_type) === '1' ? (
                         <Label color="info">Юр.лицо</Label>
                       ) : (
                         <Label color="warning">Физ.лицо</Label>

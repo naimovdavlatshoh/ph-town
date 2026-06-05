@@ -121,7 +121,7 @@ export default function ClientNewEditPaymentType({ isEditMode = false }) {
                     key={item.label}
                     onClick={() => {
                       field.onChange(item.label);
-                      console.log(item.label);
+                      // console.log(item.label);
                     }}
                     sx={{
                       px: 0.8,

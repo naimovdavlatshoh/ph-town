@@ -65,7 +65,7 @@ export default function ContractNewEditDetailsAuto2() {
         details: currentList,
       });
 
-      console.log(result.data);
+      // console.log(result.data);
 
       // Map backend response to mounthPayList format
       const mounthPayList = result.data?.payment_day?.map((date, idx) => ({

@@ -481,7 +481,7 @@ export default function CheckerboardRoomDetails({
     </Stack>
   );
 
-  console.log(apartment);
+  // console.log(apartment);
 
   return (
     <>

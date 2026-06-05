@@ -92,7 +92,7 @@ export default function RoomTableRow({
       }
 
       const data = await response.json();
-      console.log('Stock status update success:', data);
+      // console.log('Stock status update success:', data);
 
       setLocalStockStatus((prev) => (prev === '5' ? '1' : '5'));
 

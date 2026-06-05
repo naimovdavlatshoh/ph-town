@@ -90,7 +90,7 @@ export default function BarterContractTableRow({
     is_terminated,
   } = row;
 
-  console.log(is_terminated);
+  // console.log(is_terminated);
 
   const [openComment, setOpenComment] = useState(false);
   const [data, setData] = useState([]);

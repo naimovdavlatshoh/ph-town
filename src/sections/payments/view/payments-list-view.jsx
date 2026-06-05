@@ -350,7 +350,7 @@ export default function PaymentsListView() {
     return shortDateLabel(startDay, endDay);
   };
 
-  console.log(user.role);
+  // console.log(user.role);
 
   return (
     <>
@@ -418,39 +418,39 @@ export default function PaymentsListView() {
               >
                 <PaymentsAnalytic
                   title={renderFilterDay(filters.startDate, filters.endDate)}
-                  total={byAllTotal}
-                  count={byAllCount}
+                  total={Number(byAllTotal) || 0}
+                  count={Number(byAllCount) || 0}
                   icon="pixelarticons:calendar-tomorrow"
                   color={theme.palette.text.secondary}
                 />
                 <PaymentsAnalytic
                   title="Наличные"
-                  total={byPaidTotal?.payment_amount || 0}
-                  count={byPaidTotal?.payment_method_count || 0}
+                  total={Number(byPaidTotal?.payment_amount) || 0}
+                  count={Number(byPaidTotal?.payment_method_count) || 0}
                   icon="iconoir:hand-cash"
                   color={theme.palette.error.main}
                 />
 
                 <PaymentsAnalytic
                   title="Терминал"
-                  total={byTerminalTotal?.payment_amount || 0}
-                  count={byTerminalTotal?.payment_method_count || 0}
+                  total={Number(byTerminalTotal?.payment_amount) || 0}
+                  count={Number(byTerminalTotal?.payment_method_count) || 0}
                   icon="solar:cash-out-outline"
                   color={theme.palette.success.main}
                 />
 
                 <PaymentsAnalytic
                   title="Click"
-                  total={byClickTotal?.payment_amount || 0}
-                  count={byClickTotal?.payment_method_count || 0}
+                  total={Number(byClickTotal?.payment_amount) || 0}
+                  count={Number(byClickTotal?.payment_method_count) || 0}
                   icon="mdi:bank-outline"
                   iconSrc={clickLogo}
                   color={theme.palette.info.main}
                 />
                 <PaymentsAnalytic
                   title="Банк"
-                  total={byP2PTotal?.payment_amount || 0}
-                  count={byP2PTotal?.payment_method_count || 0}
+                  total={Number(byP2PTotal?.payment_amount) || 0}
+                  count={Number(byP2PTotal?.payment_method_count) || 0}
                   price={getTotalAmount('pending')}
                   icon="solar:card-transfer-broken"
                   color={theme.palette.warning.main}

@@ -93,7 +93,7 @@ export default function StatisticView() {
   };
 
   useEffect(() => {
-    console.log('Fetching data for year:', year);
+    // console.log('Fetching data for year:', year);
 
     getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/contracts?year=${year}`).then((data) => {
       if (!data) {

@@ -260,12 +260,12 @@ export default function PaymentsNewForm({
   }
 
   const renderClientName = (client) => {
-    if (client?.client_type === '0') {
-      return `${client?.client_surname} ${client?.client_name || ''} ${
+    if (String(client?.client_type) === '0') {
+      return `${client?.client_surname || ''} ${client?.client_name || ''} ${
         client?.client_fathername || ''
-      }`;
+      }`.trim();
     }
-    if (client?.client_type === '1') {
+    if (String(client?.client_type) === '1') {
       return `"${client?.business_name}". Директор: ${
         client?.business_director_name || 'Не заполнен'
       }`;
@@ -367,12 +367,12 @@ export default function PaymentsNewForm({
           loading={clientTerm?.length >= 3 ? searchLoading : clientsLoading}
           noOptionsText="Пусто"
           loadingText="Идет поиск..."
+          filterOptions={(x) => x} // ← отключаем клиентскую фильтрацию, поиск идёт на сервере
           inputValue={clientTermHelper}
           onInputChange={(event, newInputValue, type) => {
             if (type === 'reset') {
               setClientTermHelper(newInputValue);
             }
-
             if (type === 'input') {
               setClientTerm(newInputValue);
               setClientTermHelper(newInputValue);
@@ -385,6 +385,7 @@ export default function PaymentsNewForm({
           fullWidth
           options={clientTerm?.length >= 3 ? searchResults : clients}
           getOptionLabel={(option) => renderClientName(option)}
+          isOptionEqualToValue={(option, value) => option.client_id === value.client_id}
           onChange={(event, newValue, reason) => {
             methods.setValue('client', newValue, { shouldValidate: true });
             if (reason === 'clear') {
@@ -430,6 +431,13 @@ export default function PaymentsNewForm({
         </RHFSelect>
 
         {contractData?.contract_cash_type === '0' && (
+          // <RHFCurrencyField
+          //   name="exchangeRate"
+          //   label="Текущий курс доллара"
+          //   placeholder="0"
+          //   decimalScale={2}
+          //   InputLabelProps={{ shrink: true }}
+          // />
           <RHFCurrencyField
             name="exchangeRate"
             label="Текущий курс доллара"
@@ -583,6 +591,17 @@ export default function PaymentsNewForm({
   );
 }
 
+// PaymentsNewForm.propTypes = {
+//   onClose: PropTypes.func,
+//   onCreate: PropTypes.func,
+//   onCreate2: PropTypes.func,
+//   open: PropTypes.bool,
+//   entranceId: PropTypes.string,
+//   projectId: PropTypes.string,
+//   blockId: PropTypes.string,
+//   data: PropTypes.object.isRequired,
+// };
+
 PaymentsNewForm.propTypes = {
   onClose: PropTypes.func,
   onCreate: PropTypes.func,
@@ -591,5 +610,5 @@ PaymentsNewForm.propTypes = {
   entranceId: PropTypes.string,
   projectId: PropTypes.string,
   blockId: PropTypes.string,
-  data: PropTypes.object.isRequired,
+  data: PropTypes.object,
 };

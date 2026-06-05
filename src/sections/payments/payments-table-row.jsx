@@ -11,8 +11,7 @@ import Link from '@mui/material/Link';
 import { Box, Stack } from '@mui/system';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
-import Divider from '@mui/material/Divider';
-import MenuItem from '@mui/material/MenuItem';
+// import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
@@ -20,6 +19,7 @@ import ListItemText from '@mui/material/ListItemText';
 import { Badge, Tooltip, IconButton, badgeClasses, DialogActions } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
@@ -32,7 +32,6 @@ import Iconify from 'src/components/iconify';
 import { RHFTextField } from 'src/components/hook-form';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import FormProvider from 'src/components/hook-form/form-provider';
-import CustomPopover, { usePopover } from 'src/components/custom-popover';
 
 // ----------------------------------------------------------------------
 
@@ -45,12 +44,12 @@ function makeColor(value) {
 }
 
 const renderClientName = (client) => {
-  if (client?.client_type === '0') {
-    return `${client?.client_surname} ${client?.client_name || ''} ${
+  if (String(client?.client_type) === '0') {
+    return `${client?.client_surname || ''} ${client?.client_name || ''} ${
       client?.client_fathername || ''
-    }`;
+    }`.trim();
   }
-  if (client?.client_type === '1') {
+  if (String(client?.client_type) === '1') {
     return `"${client?.business_name}". Директор: ${
       client?.business_director_name || 'Не заполнен'
     }`;
@@ -70,6 +69,8 @@ export default function PaymentsTableRow({
   // eslint-disable-next-line react/prop-types
   printTemplateRef,
 }) {
+  const router = useRouter();
+
   const {
     cash_type,
     client_fathername,
@@ -117,10 +118,6 @@ export default function PaymentsTableRow({
   const [openComment, setOpenComment] = useState(false);
   const [data, setData] = useState([]);
 
-  console.log(created_at);
-
-  // const is_terminated = '1';
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -146,19 +143,21 @@ export default function PaymentsTableRow({
   };
 
   const handleTooltipOpen = (e) => {
-    e.preventDefault();
+    e.stopPropagation();
     setOpenComment(true);
   };
 
-  const confirm = useBoolean();
   const confirmDelete = useBoolean();
 
-  const popover = usePopover();
-
   const handleDelete = (e) => {
-    e.preventDefault();
     e.stopPropagation();
     confirmDelete.onTrue();
+  };
+
+  const handleRowClick = () => {
+    if (contract_id) {
+      router.push(paths.dashboard.contracts.details(row.contract_id));
+    }
   };
 
   const renderAvatar = (
@@ -187,10 +186,9 @@ export default function PaymentsTableRow({
       <TableRow
         hover
         selected={selected}
-        component={contract_id && RouterLink}
-        href={contract_id && paths.dashboard.contracts.details(row.contract_id)}
+        onClick={handleRowClick}
         sx={{
-          textDecoration: 'none',
+          cursor: contract_id ? 'pointer' : 'default',
           '&:last-child td, &:last-child th': { border: 0 },
         }}
       >
@@ -199,30 +197,26 @@ export default function PaymentsTableRow({
 
         <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
           {renderAvatar}
-          {/* <Avatar alt={client_name} sx={{ mr: 2 }}>
-            {client_name?.charAt(0).toUpperCase()}
-          </Avatar> */}
           {client_name}
 
           <ListItemText
             disableTypography
             primary={
-              <Link component={RouterLink} href={paths.dashboard.clients.details(row?.client_id)}>
+              <Link
+                component={RouterLink}
+                href={paths.dashboard.clients.details(row?.client_id)}
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Typography variant="body2" noWrap>
                   {renderClientName(row.client_info)}
-                </Typography>{' '}
+                </Typography>
               </Link>
             }
             secondary={
-              <Link
-                noWrap
-                variant="body2"
-                onClick={onViewRow}
-                sx={{ color: 'text.disabled', cursor: 'pointer' }}
-              >
-                {client_type === '0' && 'Физ.лицо'}
-                {client_type === '1' && 'Юр.лицо'}
-              </Link>
+              <Typography variant="body2" sx={{ color: 'text.disabled' }} noWrap>
+                {String(client_type) === '0' && 'Физ.лицо'}
+                {String(client_type) === '1' && 'Юр.лицо'}
+              </Typography>
             }
           />
         </TableCell>
@@ -236,7 +230,15 @@ export default function PaymentsTableRow({
             open={openComment}
             title={comments || 'Нет комментариев'}
           >
-            <Iconify color="orange" icon="ic:baseline-comment" onClick={handleTooltipOpen} />
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleTooltipOpen(e);
+              }}
+            >
+              <Iconify color="orange" icon="ic:baseline-comment" />
+            </IconButton>
           </Tooltip>
         </TableCell>
 
@@ -314,7 +316,7 @@ export default function PaymentsTableRow({
               sx={{ color: 'info.main' }}
               color="default"
               onClick={(e) => {
-                e.preventDefault();
+                e.stopPropagation();
                 handlePrint(row);
               }}
             >
@@ -326,6 +328,7 @@ export default function PaymentsTableRow({
           </Stack>
         </TableCell>
       </TableRow>
+
       <ConfirmDialog
         open={confirmDelete.value}
         onClose={confirmDelete.onFalse}
@@ -337,56 +340,6 @@ export default function PaymentsTableRow({
             contractId={contract_id}
             kassaId={kassa_id}
           />
-        }
-      />
-      <CustomPopover
-        open={popover.open}
-        onClose={popover.onClose}
-        arrow="right-top"
-        sx={{ width: 160 }}
-      >
-        <MenuItem
-          onClick={() => {
-            onViewRow();
-            popover.onClose();
-          }}
-        >
-          <Iconify icon="solar:eye-bold" />
-          View
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            onEditRow();
-            popover.onClose();
-          }}
-        >
-          <Iconify icon="solar:pen-bold" />
-          Edit
-        </MenuItem>
-
-        <Divider sx={{ borderStyle: 'dashed' }} />
-
-        <MenuItem
-          onClick={() => {
-            confirm.onTrue();
-            popover.onClose();
-          }}
-          sx={{ color: 'error.main' }}
-        >
-          <Iconify icon="solar:trash-bin-trash-bold" />
-          Delete
-        </MenuItem>
-      </CustomPopover>
-
-      <ConfirmDialog
-        onClose={confirm.onFalse}
-        title="Delete"
-        content="Are you sure want to delete?"
-        action={
-          <Button variant="contained" color="error" onClick={onDeleteRow}>
-            Delete
-          </Button>
         }
       />
     </>
@@ -416,14 +369,13 @@ const ConfirmContent = ({ onDeleteRow, onClose, kassaId, contractId }) => {
 
   const {
     reset,
-
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = handleSubmit(async (formData) => {
     const newData = {
-      comments: data.comments,
+      comments: formData.comments,
       kassa_id: kassaId,
     };
 
