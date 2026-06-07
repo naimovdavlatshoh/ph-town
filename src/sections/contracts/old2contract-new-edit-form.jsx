@@ -49,26 +49,17 @@ const getMonthlyPaymentAuto = (type) => {
 };
 
 // ----------------------------------------------------------------------
-// Единая формула суммы (синхронно с бэком):
-// total_price = price_square_meter($) * apartment_area * contract_exchange_rate
-// Дробь отрезается (Math.trunc == bcadd(...,0) на бэке).
-// ----------------------------------------------------------------------
-const calcTotalPrice = (priceSquareMeter, apartmentArea, exchangeRate) => {
-  const price = parseFloat(priceSquareMeter) || 0;
-  const area = parseFloat(apartmentArea) || 0;
-  const rate = parseFloat(String(exchangeRate ?? '').replace(/,/g, '')) || 0;
-  return Math.trunc(price * area * rate);
-};
-
-// ----------------------------------------------------------------------
 
 export default function ContractNewEditForm({ currentContract, apartmentId }) {
   const { currency } = useGetCurrency();
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
 
+  // ВАЖНО: contractsLoading из этого хука — это загрузка СПИСКА (SWR isLoading),
+  // НЕ загрузка create/update. Поэтому для кнопки используем СВОЙ локальный флаг.
   const { create, createWithPlan, update, updateWithPlan } = useGetContracts();
 
+  // Локальный loading отправки формы — именно он управляет спиннером кнопки.
   const [submitting, setSubmitting] = useState(false);
 
   const NewContractSchema = Yup.object().shape({
@@ -101,13 +92,11 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
     ),
     contract_number: Yup.string().required('Заполните поле'),
     contract_cash_type: Yup.string().required('Выберите валюту'),
-    // Курс доллара обязателен ВСЕГДА (цена за квадрат — в долларах)
-    contract_exchange_rate: Yup.string()
-      .required('Укажите курс доллара')
-      .test('positive', 'Курс должен быть больше 0', (value) => {
-        const n = parseFloat(String(value ?? '').replace(/,/g, ''));
-        return !Number.isNaN(n) && n > 0;
-      }),
+    contract_exchange_rate: Yup.string().when(
+      'contract_cash_type',
+      ([contract_cash_type], schema) =>
+        contract_cash_type === 'USD' ? schema.required('Введите курс доллара') : schema
+    ),
     startDay: Yup.string().when(
       ['paymentType', 'monthlyPaymentAuto'],
       ([paymentType, monthlyPaymentAuto], schema) =>
@@ -197,7 +186,7 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
 
   const { reset, handleSubmit, control } = methods;
 
-  // --- Заполнение формы при редактировании ---
+  // --- Заполнение формы при редактировании (без изменений) ---
   useEffect(() => {
     if (currentContract) {
       methods.setValue('client', {
@@ -272,24 +261,18 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
     []
   );
 
-  // --- watch-эффекты ---
+  // --- watch-эффекты (без изменений) ---
   useEffect(() => {
     methods.setValue('initialPayment', currentContract ? currentContract?.initial_payment : '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [methods.watch('paymentType')]);
 
-  // ВАЖНО: пересчёт totalAmount по формуле при смене квартиры или курса.
-  // Так фронтовый totalAmount всегда совпадает с тем, что посчитает бэк,
-  // а значит остаток и график платежей согласованы (строгая проверка пройдёт).
   useEffect(() => {
-    const apt = methods.watch('apartment');
-    const rate = methods.watch('contract_exchange_rate');
-    if (apt) {
-      const total = calcTotalPrice(apt.price_square_meter, apt.apartment_area, rate);
-      methods.setValue('totalAmount', total);
+    if (methods.watch('contract_cash_type') === 'SUM') {
+      methods.setValue('contract_exchange_rate', '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [methods.watch('apartment'), methods.watch('contract_exchange_rate')]);
+  }, [methods.watch('contract_cash_type')]);
 
   useEffect(() => {
     methods.setValue('initialPayment', currentContract ? currentContract?.initial_payment : '');
@@ -320,11 +303,9 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
   }, [methods.watch('initialPayment'), methods.watch('startDay')]);
 
   // ----------------------------------------------------------------------
-  // Сборка payload для backend
+  // Сборка payload для backend (перенесено из бывшего диалога превью)
   // ----------------------------------------------------------------------
   const buildPayload = (data) => {
-    const rate = parseFloat(String(data?.contract_exchange_rate ?? '').replace(/,/g, ''));
-
     const base = {
       created_at: moment(data?.contract_date).valueOf(),
       client_id: data?.client?.client_id,
@@ -332,17 +313,14 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
       apartment_id: data?.apartment?.apartment_id,
       apartment_area: data?.apartment?.apartment_area,
       price_square_meter: data?.apartment?.price_square_meter,
-      // total_price считается по формуле (синхронно с бэком), дробь отрезается
-      total_price: calcTotalPrice(
-        data?.apartment?.price_square_meter,
-        data?.apartment?.apartment_area,
-        rate
-      ),
+      total_price: data?.totalAmount,
       initial_payment: parseFloat(data?.initialPayment?.replace(/,/g, '')),
       comments: data?.comments,
       is_barter: data.is_barter ? 1 : 0,
       contract_cash_type: data?.contract_cash_type === 'SUM' ? 1 : 0,
-      contract_exchange_rate: rate,
+      contract_exchange_rate: data?.contract_exchange_rate
+        ? parseFloat(data?.contract_exchange_rate?.replace(/,/g, '') || data?.contract_exchange_rate)
+        : null,
     };
 
     if (data.paymentType === 'Наличными') {
@@ -364,7 +342,8 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
   };
 
   // ----------------------------------------------------------------------
-  // Сабмит
+  // Сабмит: handleSubmit гарантирует, что сюда попадём только при валидной форме.
+  // Невалидные поля автоматически подсветятся (логика ошибок сохранена).
   // ----------------------------------------------------------------------
   const onSubmit = handleSubmit(async (data) => {
     setSubmitting(true);
@@ -372,6 +351,8 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
       const isInstallment = data.paymentType === 'В рассрочку';
       const payload = buildPayload(data);
 
+      // result — это result.data из ответа backend (см. правку contract.js),
+      // ожидаем там contract_id.
       let result;
 
       if (currentContract) {
@@ -391,16 +372,20 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
 
       reset();
 
+      // contract_id из ответа backend; для update — fallback на текущий.
       const contractId = result?.contract_id ?? currentContract?.contract_id;
 
       if (contractId) {
         router.push(paths.dashboard.contracts.details(contractId));
       } else {
+        // если backend не вернул id — уходим на список
         router.push(paths.dashboard.contracts.root);
       }
     } catch (error) {
       console.error(error);
 
+      // В этом шаблоне axios-интерсептор реджектит телом ответа (error.response.data),
+      // поэтому проверяем несколько мест.
       const message =
         error?.response?.data?.message ||
         error?.message ||
@@ -408,6 +393,7 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
 
       enqueueSnackbar(message, { variant: 'error' });
     } finally {
+      // снимаем loading в любом случае (успех / 400 / 500)
       setSubmitting(false);
     }
   });
@@ -510,7 +496,7 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
 
                   <RHFTextField
                     name="contract_exchange_rate"
-                    label="Курс доллара *"
+                    label="Курс доллара"
                     size="small"
                     type="number"
                     sx={{ maxWidth: 200 }}
@@ -572,6 +558,7 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
           Отменить
         </Button>
 
+        {/* «Далее11» -> «Создать»/«Обновить»; loading на локальном submitting */}
         <LoadingButton type="submit" size="large" variant="contained" loading={submitting}>
           {currentContract ? 'Обновить' : 'Создать'}
         </LoadingButton>

@@ -430,7 +430,7 @@ export default function PaymentsNewForm({
           </MenuItem>
         </RHFSelect>
 
-        {contractData?.contract_cash_type === '0' && (
+        {/* {contractData?.contract_cash_type === '0' && (
           // <RHFCurrencyField
           //   name="exchangeRate"
           //   label="Текущий курс доллара"
@@ -438,14 +438,15 @@ export default function PaymentsNewForm({
           //   decimalScale={2}
           //   InputLabelProps={{ shrink: true }}
           // />
-          <RHFCurrencyField
-            name="exchangeRate"
-            label="Текущий курс доллара"
-            placeholder="0"
-            decimalScale={2}
-            InputLabelProps={{ shrink: true }}
-          />
-        )}
+          
+        )} */}
+        <RHFCurrencyField
+          name="exchangeRate"
+          label="Текущий курс доллара"
+          placeholder="0"
+          decimalScale={2}
+          InputLabelProps={{ shrink: true }}
+        />
 
         <RHFSelect
           name="paymentMethod"
