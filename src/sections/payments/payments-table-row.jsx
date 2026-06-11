@@ -12,6 +12,7 @@ import { Box, Stack } from '@mui/system';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 // import MenuItem from '@mui/material/MenuItem';
+import { alpha } from '@mui/material/styles';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
@@ -84,6 +85,7 @@ export default function PaymentsTableRow({
     kassa_id,
     operator_name,
     payment_amount,
+    real_payment_amount_uzs,
     payment_amount_usd,
     contract_cash_type,
     contract_exchange_rate,
@@ -192,13 +194,29 @@ export default function PaymentsTableRow({
           '&:last-child td, &:last-child th': { border: 0 },
         }}
       >
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{invoice_number}</TableCell>
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{contract_number}</TableCell>
+        {/* Инвойс */}
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+          <Label variant="soft" color="default">
+            {invoice_number}
+          </Label>
+        </TableCell>
 
-        <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
+        {/* Договор */}
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+          {contract_number ? (
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {contract_number}
+            </Typography>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+
+        {/* Клиент */}
+        <TableCell sx={{ display: 'flex', alignItems: 'center', minWidth: 240 }}>
           {renderAvatar}
-          {client_name}
-
           <ListItemText
             disableTypography
             primary={
@@ -207,25 +225,31 @@ export default function PaymentsTableRow({
                 href={paths.dashboard.clients.details(row?.client_id)}
                 onClick={(e) => e.stopPropagation()}
               >
-                <Typography variant="body2" noWrap>
+                <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
                   {renderClientName(row.client_info)}
                 </Typography>
               </Link>
             }
             secondary={
-              <Typography variant="body2" sx={{ color: 'text.disabled' }} noWrap>
-                {String(client_type) === '0' && 'Физ.лицо'}
-                {String(client_type) === '1' && 'Юр.лицо'}
-              </Typography>
+              <Stack direction="row" alignItems="center" gap={0.75} sx={{ mt: 0.25 }}>
+                <Typography variant="caption" sx={{ color: 'text.disabled' }} noWrap>
+                  {String(client_type) === '0' && 'Физ.лицо'}
+                  {String(client_type) === '1' && 'Юр.лицо'}
+                </Typography>
+                {contract_cash_type !== undefined && contract_cash_type !== null && (
+                  <Label variant="soft" color={contractTypeColor}>
+                    {contractTypeLabel}
+                  </Label>
+                )}
+              </Stack>
             }
           />
         </TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+        {/* Комментарий */}
+        <TableCell align="center">
           <Tooltip
-            PopperProps={{
-              disablePortal: true,
-            }}
+            PopperProps={{ disablePortal: true }}
             onClose={handleTooltipClose}
             open={openComment}
             title={comments || 'Нет комментариев'}
@@ -237,33 +261,99 @@ export default function PaymentsTableRow({
                 handleTooltipOpen(e);
               }}
             >
-              <Iconify color="orange" icon="ic:baseline-comment" />
+              <Iconify color={comments ? 'orange' : 'disabled'} icon="ic:baseline-comment" />
             </IconButton>
           </Tooltip>
         </TableCell>
 
-        <TableCell sx={{ color: makeColor(payment_amount) }}>{fCurrency(payment_amount)}</TableCell>
-        <TableCell sx={{ color: makeColor(payment_amount_usd) }}>
-          {payment_amount_usd ? fCurrency(payment_amount_usd) : '-'}
-        </TableCell>
-        <TableCell>
-          {contract_cash_type !== undefined && contract_cash_type !== null ? (
-            <Label variant="soft" color={contractTypeColor}>
-              {contractTypeLabel}
-            </Label>
-          ) : (
-            '-'
-          )}
-        </TableCell>
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          {contract_exchange_rate ? fCurrency(contract_exchange_rate) : '-'}
-        </TableCell>
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          {payment_exchange_rate ? fCurrency(payment_exchange_rate) : '-'}
+        {/* Сумма (UZS) */}
+        <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              fontFamily: 'monospace',
+              color: makeColor(payment_amount) || 'text.primary',
+            }}
+          >
+            {fCurrency(payment_amount)}
+          </Typography>
         </TableCell>
 
+        {/* В кассу */}
+        <TableCell
+          align="right"
+          sx={{
+            whiteSpace: 'nowrap',
+            bgcolor: (t) => alpha(t.palette.success.main, 0.08),
+          }}
+        >
+          {real_payment_amount_uzs ? (
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 700,
+                fontFamily: 'monospace',
+                color: makeColor(real_payment_amount_uzs) || 'success.dark',
+              }}
+            >
+              {fCurrency(real_payment_amount_uzs)}
+            </Typography>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+
+        {/* Сумма (USD) */}
+        <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+          {payment_amount_usd ? (
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: 'monospace',
+                color: makeColor(payment_amount_usd) || 'text.secondary',
+              }}
+            >
+              ${fCurrency(payment_amount_usd)}
+            </Typography>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+
+        {/* Курс контракта */}
+        <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+          {contract_exchange_rate ? (
+            <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+              {fCurrency(contract_exchange_rate)}
+            </Typography>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+
+        {/* Курс оплаты */}
+        <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+          {payment_exchange_rate ? (
+            <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+              {fCurrency(payment_exchange_rate)}
+            </Typography>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+
+        {/* Метод оплаты */}
         <TableCell>
-          <Stack direction="row" gap={1}>
+          <Stack direction="row" gap={0.5} flexWrap="wrap">
             <Label
               variant="soft"
               color={
@@ -281,7 +371,7 @@ export default function PaymentsTableRow({
                 'default'}
             </Label>
             {is_terminated === '1' && (
-              <Label variant="soft" color="error" sx={{ ml: 1 }}>
+              <Label variant="soft" color="error">
                 Расторгнут
               </Label>
             )}
@@ -292,8 +382,14 @@ export default function PaymentsTableRow({
             )}
           </Stack>
         </TableCell>
-        <TableCell align="center">{operator_name}</TableCell>
-        <TableCell>
+
+        {/* Оператор */}
+        <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+          <Typography variant="body2">{operator_name}</Typography>
+        </TableCell>
+
+        {/* Дата оплаты */}
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
           {created_at ? (
             <ListItemText
               primary={fDate(created_at)}
@@ -303,6 +399,7 @@ export default function PaymentsTableRow({
                 mt: 0.5,
                 component: 'span',
                 typography: 'caption',
+                color: 'text.disabled',
               }}
             />
           ) : (
@@ -310,21 +407,25 @@ export default function PaymentsTableRow({
           )}
         </TableCell>
 
+        {/* Действия */}
         <TableCell align="right" sx={{ px: 1 }}>
-          <Stack direction="row" gap={2}>
-            <IconButton
-              sx={{ color: 'info.main' }}
-              color="default"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrint(row);
-              }}
-            >
-              <Iconify icon="material-symbols:print" />
-            </IconButton>
-            <IconButton sx={{ color: 'error.main' }} color="default" onClick={handleDelete}>
-              <Iconify icon="solar:trash-bin-trash-bold" />
-            </IconButton>
+          <Stack direction="row" gap={1} justifyContent="flex-end">
+            <Tooltip title="Печать">
+              <IconButton
+                sx={{ color: 'info.main' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrint(row);
+                }}
+              >
+                <Iconify icon="material-symbols:print" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Удалить">
+              <IconButton sx={{ color: 'error.main' }} onClick={handleDelete}>
+                <Iconify icon="solar:trash-bin-trash-bold" />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </TableCell>
       </TableRow>

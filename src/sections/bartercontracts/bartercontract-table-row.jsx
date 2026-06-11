@@ -12,6 +12,7 @@ import { Box, Stack } from '@mui/system';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
+import { alpha } from '@mui/material/styles';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
@@ -45,12 +46,12 @@ function makeColor(value) {
 }
 
 const renderClientName = (client) => {
-  if (client?.client_type === '0') {
-    return `${client?.client_surname} ${client?.client_name || ''} ${
+  if (String(client?.client_type) === '0') {
+    return `${client?.client_surname || ''} ${client?.client_name || ''} ${
       client?.client_fathername || ''
-    }`;
+    }`.trim();
   }
-  if (client?.client_type === '1') {
+  if (String(client?.client_type) === '1') {
     return `"${client?.business_name}". Директор: ${
       client?.business_director_name || 'Не заполнен'
     }`;
@@ -83,6 +84,11 @@ export default function BarterContractTableRow({
     kassa_id,
     operator_name,
     payment_amount,
+    real_payment_amount_uzs,
+    payment_amount_usd,
+    contract_cash_type,
+    contract_exchange_rate,
+    payment_exchange_rate,
     payment_method,
     contract_number,
     type_of_expense,
@@ -90,7 +96,25 @@ export default function BarterContractTableRow({
     is_terminated,
   } = row;
 
-  // console.log(is_terminated);
+  const contractTypeColor = (() => {
+    if (contract_cash_type === '1') {
+      return 'info';
+    }
+    if (contract_cash_type === '0') {
+      return 'warning';
+    }
+    return 'default';
+  })();
+
+  const contractTypeLabel = (() => {
+    if (contract_cash_type === '1') {
+      return 'Сумовой';
+    }
+    if (contract_cash_type === '0') {
+      return 'Долларовый';
+    }
+    return contract_cash_type;
+  })();
 
   const [openComment, setOpenComment] = useState(false);
   const [data, setData] = useState([]);
@@ -121,6 +145,7 @@ export default function BarterContractTableRow({
 
   const handleTooltipOpen = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setOpenComment(true);
   };
 
@@ -165,59 +190,175 @@ export default function BarterContractTableRow({
         href={contract_id && paths.dashboard.contracts.details(row.contract_id)}
         sx={{
           textDecoration: 'none',
+          cursor: contract_id ? 'pointer' : 'default',
           '&:last-child td, &:last-child th': { border: 0 },
         }}
       >
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{invoice_number}</TableCell>
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{contract_number}</TableCell>
+        {/* Инвойс */}
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+          <Label variant="soft" color="default">
+            {invoice_number}
+          </Label>
+        </TableCell>
 
-        <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
+        {/* Договор */}
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+          {contract_number ? (
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {contract_number}
+            </Typography>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+
+        {/* Клиент */}
+        <TableCell sx={{ display: 'flex', alignItems: 'center', minWidth: 240 }}>
           {renderAvatar}
-          {/* <Avatar alt={client_name} sx={{ mr: 2 }}>
-            {client_name?.charAt(0).toUpperCase()}
-          </Avatar> */}
-          {client_name}
-
           <ListItemText
             disableTypography
             primary={
-              <Link component={RouterLink} href={paths.dashboard.clients.details(row?.client_id)}>
-                <Typography variant="body2" noWrap>
+              <Link
+                component={RouterLink}
+                href={paths.dashboard.clients.details(row?.client_id)}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
                   {renderClientName(row.client_info)}
-                </Typography>{' '}
+                </Typography>
               </Link>
             }
             secondary={
-              <Link
-                noWrap
-                variant="body2"
-                onClick={onViewRow}
-                sx={{ color: 'text.disabled', cursor: 'pointer' }}
-              >
-                {client_type === '0' && 'Физ.лицо'}
-                {client_type === '1' && 'Юр.лицо'}
-              </Link>
+              <Stack direction="row" alignItems="center" gap={0.75} sx={{ mt: 0.25 }}>
+                <Typography variant="caption" sx={{ color: 'text.disabled' }} noWrap>
+                  {String(client_type) === '0' && 'Физ.лицо'}
+                  {String(client_type) === '1' && 'Юр.лицо'}
+                </Typography>
+                {contract_cash_type !== undefined && contract_cash_type !== null && (
+                  <Label
+                    variant="soft"
+                    color={contractTypeColor}
+                    sx={{ height: 20, fontSize: 11 }}
+                  >
+                    {contractTypeLabel}
+                  </Label>
+                )}
+              </Stack>
             }
           />
         </TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+        {/* Комментарий */}
+        <TableCell align="center">
           <Tooltip
-            PopperProps={{
-              disablePortal: true,
-            }}
+            PopperProps={{ disablePortal: true }}
             onClose={handleTooltipClose}
             open={openComment}
             title={comments || 'Нет комментариев'}
           >
-            <Iconify color="orange" icon="ic:baseline-comment" onClick={handleTooltipOpen} />
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleTooltipOpen(e);
+              }}
+            >
+              <Iconify color={comments ? 'orange' : 'disabled'} icon="ic:baseline-comment" />
+            </IconButton>
           </Tooltip>
         </TableCell>
 
-        <TableCell sx={{ color: makeColor(payment_amount) }}>{fCurrency(payment_amount)}</TableCell>
+        {/* Сумма (UZS) */}
+        <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              fontFamily: 'monospace',
+              color: makeColor(payment_amount) || 'text.primary',
+            }}
+          >
+            {fCurrency(payment_amount)}
+          </Typography>
+        </TableCell>
 
+        {/* В кассу */}
+        <TableCell
+          align="right"
+          sx={{
+            whiteSpace: 'nowrap',
+            bgcolor: (t) => alpha(t.palette.success.main, 0.08),
+          }}
+        >
+          {real_payment_amount_uzs ? (
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 700,
+                fontFamily: 'monospace',
+                color: makeColor(real_payment_amount_uzs) || 'success.dark',
+              }}
+            >
+              {fCurrency(real_payment_amount_uzs)}
+            </Typography>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+
+        {/* Сумма (USD) */}
+        <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+          {payment_amount_usd ? (
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: 'monospace',
+                color: makeColor(payment_amount_usd) || 'text.secondary',
+              }}
+            >
+              ${fCurrency(payment_amount_usd)}
+            </Typography>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+
+        {/* Курс контракта */}
+        <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+          {contract_exchange_rate ? (
+            <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+              {fCurrency(contract_exchange_rate)}
+            </Typography>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+
+        {/* Курс оплаты */}
+        <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+          {payment_exchange_rate ? (
+            <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+              {fCurrency(payment_exchange_rate)}
+            </Typography>
+          ) : (
+            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+              —
+            </Typography>
+          )}
+        </TableCell>
+
+        {/* Метод оплаты */}
         <TableCell>
-          <Stack direction="row" gap={1}>
+          <Stack direction="row" gap={0.5} flexWrap="wrap">
             <Label
               variant="soft"
               color={
@@ -235,7 +376,7 @@ export default function BarterContractTableRow({
                 'default'}
             </Label>
             {is_terminated === '1' && (
-              <Label variant="soft" color="error" sx={{ ml: 1 }}>
+              <Label variant="soft" color="error">
                 Расторгнут
               </Label>
             )}
@@ -246,38 +387,55 @@ export default function BarterContractTableRow({
             )}
           </Stack>
         </TableCell>
-        <TableCell align="center">{operator_name}</TableCell>
-        <TableCell>
-          <ListItemText
-            primary={fDate(created_at)}
-            secondary={fTime(created_at)}
-            primaryTypographyProps={{ typography: 'body2', noWrap: true }}
-            secondaryTypographyProps={{
-              mt: 0.5,
-              component: 'span',
-              typography: 'caption',
-            }}
-          />
+
+        {/* Оператор */}
+        <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+          <Typography variant="body2">{operator_name}</Typography>
         </TableCell>
 
-        <TableCell align="right" sx={{ px: 1 }}>
-          <Stack direction="row" gap={2}>
-            <IconButton
-              sx={{ color: 'info.main' }}
-              color="default"
-              onClick={(e) => {
-                e.preventDefault();
-                handlePrint(row);
+        {/* Дата оплаты */}
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+          {created_at ? (
+            <ListItemText
+              primary={fDate(created_at)}
+              secondary={fTime(created_at)}
+              primaryTypographyProps={{ typography: 'body2', noWrap: true }}
+              secondaryTypographyProps={{
+                mt: 0.5,
+                component: 'span',
+                typography: 'caption',
+                color: 'text.disabled',
               }}
-            >
-              <Iconify icon="material-symbols:print" />
-            </IconButton>
-            <IconButton sx={{ color: 'error.main' }} color="default" onClick={handleDelete}>
-              <Iconify icon="solar:trash-bin-trash-bold" />
-            </IconButton>
+            />
+          ) : (
+            ''
+          )}
+        </TableCell>
+
+        {/* Действия */}
+        <TableCell align="right" sx={{ px: 1 }}>
+          <Stack direction="row" gap={1} justifyContent="flex-end">
+            <Tooltip title="Печать">
+              <IconButton
+                sx={{ color: 'info.main' }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handlePrint(row);
+                }}
+              >
+                <Iconify icon="material-symbols:print" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Удалить">
+              <IconButton sx={{ color: 'error.main' }} onClick={handleDelete}>
+                <Iconify icon="solar:trash-bin-trash-bold" />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </TableCell>
       </TableRow>
+
       <ConfirmDialog
         open={confirmDelete.value}
         onClose={confirmDelete.onFalse}
@@ -291,6 +449,7 @@ export default function BarterContractTableRow({
           />
         }
       />
+
       <CustomPopover
         open={popover.open}
         onClose={popover.onClose}
@@ -368,14 +527,13 @@ const ConfirmContent = ({ onDeleteRow, onClose, kassaId, contractId }) => {
 
   const {
     reset,
-
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = handleSubmit(async (formData) => {
     const newData = {
-      comments: data.comments,
+      comments: formData.comments,
       kassa_id: kassaId,
     };
 
