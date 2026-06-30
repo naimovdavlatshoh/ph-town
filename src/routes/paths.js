@@ -115,6 +115,9 @@ export const paths = {
       edit: (id) => `${ROOTS.DASHBOARD}/contracts/${id}/edit`,
       details: (id) => `${ROOTS.DASHBOARD}/contracts/details/${id}`,
     },
+    barter: {
+      root: `${ROOTS.DASHBOARD}/barter`,
+    },
     bartercontract: {
       root: `${ROOTS.DASHBOARD}/barter-contracts`,
       new: (apartmentId) => `${ROOTS.DASHBOARD}/barter-contracts/new/${apartmentId}`,

@@ -63,6 +63,9 @@ const ContractCreatePage = lazy(() => import('src/pages/dashboard/contract/new')
 const ContractEditPage = lazy(() => import('src/pages/dashboard/contract/edit'));
 const ContractDetailsPage = lazy(() => import('src/pages/dashboard/contract/details'));
 
+// BARTER
+const BarterListPage = lazy(() => import('src/pages/dashboard/barter/list'));
+
 // BARTER CONTRACT
 const BarterContractListPage = lazy(() => import('src/pages/dashboard/bartercontract/list'));
 const BarterContractCreatePage = lazy(() => import('src/pages/dashboard/bartercontract/new'));
@@ -341,6 +344,15 @@ export const dashboardRoutes = [
           //   ),
           // },
         ],
+      },
+
+      {
+        path: 'barter',
+        element: (
+          <RoleBasedGuard hasContent roles={['1', '2', '3', '5']}>
+            <BarterListPage />
+          </RoleBasedGuard>
+        ),
       },
 
       // jjjjj

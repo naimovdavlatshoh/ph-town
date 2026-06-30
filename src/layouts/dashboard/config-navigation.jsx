@@ -380,6 +380,12 @@ export function useNavData() {
             roles: ['1', '2', '5'],
           },
           {
+            title: t('Контракты - Бартер'),
+            path: paths.dashboard.barter.root,
+            icon: ICONS.contract,
+            roles: ['1', '2', '5'],
+          },
+          {
             title: t('Касса-Контракт'),
             path: paths.dashboard.payments.root,
             icon: ICONS.cash,

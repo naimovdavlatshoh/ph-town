@@ -248,6 +248,13 @@ export const endpoints = {
     kassaBankCategoriesUpdate: '/api/v1/bankcategory/update',
     kassaBankSearch: '/api/v1/bankcategory/search',
   },
+  barterone: {
+    list: '/api/v1/barterone/list',
+    addResale: '/api/v1/barter/addresale',
+  },
+  bartertwo: {
+    list: '/api/v1/bartertwo/list',
+  },
   bartercontract: {
     list: '/api/v1/bartercontract/payments',
     info: 'api/v1/bartercontract/info',
