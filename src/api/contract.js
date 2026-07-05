@@ -383,7 +383,11 @@ export function useSearchClientsFromContract(query) {
 export function useGetOverduedays(page = 1) {
   const URL = endpoints.contract.overduedays;
 
-  const { data, isLoading, error, isValidating } = useSWR(`${URL}?page=${page}`, fetcher);
+  // keepPreviousData: при смене страницы прошлые строки остаются видимыми,
+  // пока грузится новая страница — таблица не «моргает».
+  const { data, isLoading, error, isValidating } = useSWR(`${URL}?page=${page}`, fetcher, {
+    keepPreviousData: true,
+  });
 
   const memoizedValue = useMemo(
     () => ({

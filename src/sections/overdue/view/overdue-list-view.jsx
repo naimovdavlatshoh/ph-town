@@ -15,6 +15,7 @@ import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
 import { Box, Stack, ButtonBase } from '@mui/material';
+import LinearProgress from '@mui/material/LinearProgress';
 import TableContainer from '@mui/material/TableContainer';
 
 import { paths } from 'src/routes/paths';
@@ -36,6 +37,8 @@ import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import {
   useTable,
+  TableNoData,
+  TableSkeleton,
   TableHeadCustom,
   TableSelectedAction,
   TablePaginationCustom,
@@ -64,10 +67,11 @@ const TYPES_OPTIONS = [{ value: 'all', label: 'Все' }, ...CONTRACT_TYPES_OPTI
 const TABLE_HEAD = [
   { id: 'contract_number', label: 'Контракт' },
   { id: 'client_name', label: 'Клиент' },
-  { id: 'contract_status', label: 'Дата платежа' },
-  { id: 'contract_type', label: 'Оплачено' },
-  { id: 'contract_file', label: 'Ежемесячная плата' },
-  { id: 'comments', label: 'Просроченные дни' },
+  { id: 'phone_number', label: 'Телефон' },
+  { id: 'first_overdue_date', label: 'Первая просрочка' },
+  { id: 'overdue_days', label: 'Просрочка' },
+  { id: 'total_debt', label: 'Задолженность', align: 'right' },
+  { id: '', label: '', width: 64 },
 ];
 
 const defaultFilters = {
@@ -141,7 +145,12 @@ export default function OverdueListView() {
 
   const { user } = useAuthContext();
 
-  const { overduedaysLoading, overduedays, overduedaysEmpty, count } = useGetOverduedays(page);
+  // page — 0-индексированный (для MUI-пагинации), на бэкенд шлём страницу с 1
+  const { overduedaysLoading, overduedaysValidating, overduedays, overduedaysEmpty, count } =
+    useGetOverduedays(page + 1);
+
+  // показываем лоадер и при первой загрузке, и при переходе между страницами
+  const showLoader = overduedaysLoading || overduedaysValidating;
 
   const debounceClient = useDebounce(filters.client, 3);
   // const { searchResults, searchResultsLoading } = useSearchClientsFromContract(debounceClient);
@@ -546,6 +555,20 @@ export default function OverdueListView() {
           )} */}
 
           <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>
+            {showLoader && (
+              <LinearProgress
+                color="primary"
+                sx={{
+                  width: 1,
+                  height: 3,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  zIndex: 9,
+                }}
+              />
+            )}
+
             <TableSelectedAction
               dense={table.dense}
               numSelected={table.selected.length}
@@ -571,15 +594,22 @@ export default function OverdueListView() {
                 />
 
                 <TableBody>
-                  {overduedays.map((row, index) => (
-                    <OverdueTableRow
-                      key={`${row.contract_id}-${index}`}
-                      row={row}
-                      onSelectRow={() => {}}
-                      onPreviewDocument={() => onPreviewDocument(row.contract_id)}
-                      onEditRow={() => {}}
-                    />
-                  ))}
+                  {overduedaysLoading ? (
+                    [...Array(8)].map((_, index) => <TableSkeleton key={index} />)
+                  ) : (
+                    <>
+                      {overduedays.map((row, index) => (
+                        <OverdueTableRow
+                          key={`${row.contract_id}-${index}`}
+                          row={row}
+                          onSelectRow={() => {}}
+                          onPreviewDocument={() => onPreviewDocument(row.contract_id)}
+                          onEditRow={() => {}}
+                        />
+                      ))}
+                      <TableNoData notFound={overduedaysEmpty} />
+                    </>
+                  )}
                 </TableBody>
               </Table>
             </Scrollbar>
