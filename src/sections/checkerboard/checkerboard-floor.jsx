@@ -1,36 +1,43 @@
 import PropTypes from 'prop-types';
 
-import { Box, Stack } from '@mui/material';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 
 import CheckerboardApartment from './checkerboard-apartment';
 
-function isInRange(number, range) {
-  return number >= Math.min(...range) && number <= Math.max(...range);
-}
+// ----------------------------------------------------------------------
 
-const CheckerboardFloor = ({
-  floors,
-  roomsCountFilter,
-  roomsStatusFilter,
-  roomsPriceFilter,
-  roomsAreaFilter,
-  reserve,
-  dereserve,
-}) => {
-  const handleOpenDrawer = () => {};
-
-  return (
-    <Stack gap={1}>
-      {floors?.map((f) => (
-        <Stack key={f.floor_id} gap={1} direction="row" alignItems="center">
-          <Box
+const CheckerboardFloor = ({ floors, reserve, dereserve }) => (
+  <Stack gap={0.5}>
+    {floors?.map((f) => (
+      <Stack key={f.floor_id || f.floor_number} direction="row" alignItems="center" gap={0.5}>
+        {/* Floor number label */}
+        <Box
+          sx={{
+            width: 36,
+            minWidth: 36,
+            height: 52,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            pr: 1,
+          }}
+        >
+          <Typography
             sx={{
-              width: 40,
-              height: 40,
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'text.disabled',
+              lineHeight: 1,
             }}
           >
-            {f?.floor_number}
-          </Box>
+            {f?.floor_number === '-1' ? 'П' : f?.floor_number}
+          </Typography>
+        </Box>
+
+        {/* Apartments row */}
+        <Stack direction="row" gap={0.4} flexWrap="nowrap" alignItems="center">
           {f?.apartments?.map((apartment) => (
             <CheckerboardApartment
               key={apartment?.apartment_id}
@@ -40,17 +47,13 @@ const CheckerboardFloor = ({
             />
           ))}
         </Stack>
-      ))}
-    </Stack>
-  );
-};
+      </Stack>
+    ))}
+  </Stack>
+);
 
 CheckerboardFloor.propTypes = {
-  floors: PropTypes.object,
-  roomsCountFilter: PropTypes.string,
-  roomsStatusFilter: PropTypes.string,
-  roomsPriceFilter: PropTypes.string,
-  roomsAreaFilter: PropTypes.string,
+  floors: PropTypes.array,
   reserve: PropTypes.func,
   dereserve: PropTypes.func,
 };

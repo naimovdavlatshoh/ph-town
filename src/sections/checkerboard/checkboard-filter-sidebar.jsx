@@ -1,22 +1,24 @@
 import PropTypes from 'prop-types';
 
-import {
-  Box,
-  Stack,
-  Slider,
-  Button,
-  Divider,
-  Tooltip,
-  Typography,
-  ToggleButton,
-  ToggleButtonGroup,
-} from '@mui/material';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Slider from '@mui/material/Slider';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import Iconify from 'src/components/iconify';
 
-function valuetext(value) {
-  return `${value} $`;
-}
+// ----------------------------------------------------------------------
+
+const STATUS_OPTIONS = [
+  { value: '1', label: 'Свободно', color: '#22c55e' },
+  { value: '2', label: 'Забронировано', color: '#f59e0b' },
+  { value: '3', label: 'Продано', color: '#ef4444' },
+];
 
 export default function CheckerboardFilterSidebar({
   areaFilterOptions,
@@ -31,231 +33,124 @@ export default function CheckerboardFilterSidebar({
   onClear,
   sliderOptions,
 }) {
-  const handleChange = (event, newValue) => {
-    onToggle(newValue);
-  };
-  const handleChangeStatus = (event, newValue) => {
-    onToggleStatus(newValue);
-  };
-
-  const handleChangeArea = (event, newValue) => {
-    onToggleArea(newValue);
-  };
-
-  const handleChangePrice = (event, newValue) => {
-    onTogglePrice(newValue);
-  };
-
-  const children = [
-    <ToggleButton
-      sx={{ width: '30px', height: '30px', border: '1px solid rgba(0,0,0,.05) !important' }}
-      value="1"
-      key="1"
-    >
-      1
-    </ToggleButton>,
-    <ToggleButton
-      sx={{ width: '30px', height: '30px', border: '1px solid rgba(0,0,0,.05) !important' }}
-      value="2"
-      key="2"
-    >
-      2
-    </ToggleButton>,
-    <ToggleButton
-      sx={{ width: '30px', height: '30px', border: '1px solid rgba(0,0,0,.05) !important' }}
-      value="3"
-      key="3"
-    >
-      3
-    </ToggleButton>,
-    <ToggleButton
-      sx={{ width: '30px', height: '30px', border: '1px solid rgba(0,0,0,.05) !important' }}
-      value="4"
-      key="4"
-    >
-      4
-    </ToggleButton>,
-    <ToggleButton
-      sx={{ width: '30px', height: '30px', border: '1px solid rgba(0,0,0,.05) !important' }}
-      value="5"
-      key="5"
-    >
-      5
-    </ToggleButton>,
-  ];
-
-  const childrenStatus = [
-    <ToggleButton
-      sx={{
-        width: '50px',
-        height: '25px',
-        border: '1px solid rgba(0,0,0,.05) !important',
-        background: '#ff572280',
-
-        '&:hover': {
-          background: '#ff5722',
-        },
-        '&.Mui-selected': {
-          background: '#ff5722', // Цвет при выборе
-        },
-        '&.Mui-selected:hover': {
-          background: '#ff5722', // Цвет при выборе
-        },
-      }}
-      value="3"
-      key="3"
-    >
-      <Tooltip title="Проданные">
-        <Box width="50px" height="25px" />
-      </Tooltip>
-    </ToggleButton>,
-
-    <ToggleButton
-      sx={{
-        width: '50px',
-        height: '25px',
-        border: '1px solid rgba(0,0,0,.05) !important',
-        background: '#4caf5054',
-        '&:hover': {
-          background: '#4caf50',
-        },
-        '&.Mui-selected': {
-          background: '#4caf50', // Цвет при выборе
-        },
-        '&.Mui-selected:hover': {
-          background: '#4caf50', // Цвет при выборе
-        },
-      }}
-      value="1"
-      key="1"
-    >
-      <Tooltip title="Свободные">
-        <Box width="50px" height="25px" />
-      </Tooltip>
-    </ToggleButton>,
-
-    <ToggleButton
-      sx={{
-        width: '50px',
-        height: '25px',
-        border: '1px solid rgba(0,0,0,.05) !important',
-        background: '#ff980047',
-        '&:hover': {
-          background: '#ff9800',
-        },
-        '&.Mui-selected': {
-          background: '#ff9800', // Цвет при выборе
-        },
-        '&.Mui-selected:hover': {
-          background: '#ff9800', // Цвет при выборе
-        },
-      }}
-      value="2"
-      key="2"
-    >
-      <Tooltip title="Забронированные">
-        <Box width="50px" height="25px" />
-      </Tooltip>
-    </ToggleButton>,
-  ];
-
-  const control = {
-    value: selectedRoomFilter,
-    onChange: handleChange,
-    exclusive: true,
-  };
-
-  const controlArea = {
-    value: selectedRoomAreaFilter,
-    onChange: handleChangeArea,
-    exclusive: true,
-  };
-
-  const controlStatus = {
-    value: selectedRoomStatusFilter,
-    onChange: handleChangeStatus,
-    exclusive: true,
-  };
-
   return (
-    <Stack>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="caption">Фильтр</Typography>
-        <Stack direction="row" alignItems="center" gap={0.5}>
-          <Button
-            onClick={onClear}
-            startIcon={<Iconify icon="pajamas:clear-all" width="12px" color="red" />}
-          >
-            <Typography variant="caption" color="red">
-              Очистить
-            </Typography>
-          </Button>
-        </Stack>
+    <Stack gap={0}>
+      {/* Header */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+        <Typography variant="subtitle2">Фильтр</Typography>
+        <Button
+          size="small"
+          color="error"
+          onClick={onClear}
+          startIcon={<Iconify icon="pajamas:clear-all" width={14} />}
+          sx={{ minWidth: 0, px: 1, fontSize: 12 }}
+        >
+          Очистить
+        </Button>
       </Stack>
+
       <Divider />
-      <Stack py={2} gap={1}>
-        <Typography variant="caption" textAlign="center">
+
+      {/* Rooms count */}
+      <Stack py={2} gap={1.5}>
+        <Typography variant="overline" sx={{ color: 'text.secondary', fontSize: 10 }}>
           Кол-во комнат
         </Typography>
-        <Stack direction="row" alignItems="center" justifyContent="center">
-          <ToggleButtonGroup color="primary" size="small" {...control}>
-            {children}
-          </ToggleButtonGroup>
-        </Stack>
+        <ToggleButtonGroup
+          exclusive
+          color="primary"
+          size="small"
+          value={selectedRoomFilter}
+          onChange={(_, v) => onToggle(v)}
+          sx={{ gap: 0.5 }}
+        >
+          {['1', '2', '3', '4', '5'].map((n) => (
+            <ToggleButton
+              key={n}
+              value={n}
+              sx={{
+                width: 36,
+                height: 36,
+                fontWeight: 700,
+                fontSize: 13,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: '8px !important',
+                '&.Mui-selected': { borderColor: 'primary.main' },
+              }}
+            >
+              {n}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
       </Stack>
-      <Stack py={1} gap={1}>
-        <Typography variant="caption" textAlign="center">
+
+      <Divider />
+
+      {/* Status */}
+      <Stack py={2} gap={1.5}>
+        <Typography variant="overline" sx={{ color: 'text.secondary', fontSize: 10 }}>
           Состояние
         </Typography>
-        <Stack direction="row" alignItems="center" justifyContent="center">
-          <ToggleButtonGroup color="primary" size="small" {...controlStatus}>
-            {childrenStatus}
-          </ToggleButtonGroup>
+        <Stack direction="row" gap={1}>
+          {STATUS_OPTIONS.map(({ value, label, color }) => {
+            const selected = selectedRoomStatusFilter === value;
+            return (
+              <Tooltip key={value} title={label} arrow>
+                <Box
+                  onClick={() => onToggleStatus(selected ? null : value)}
+                  sx={{
+                    flex: 1,
+                    height: 28,
+                    borderRadius: 1,
+                    bgcolor: color,
+                    opacity: selected ? 1 : 0.3,
+                    cursor: 'pointer',
+                    border: selected ? `2px solid ${color}` : '2px solid transparent',
+                    outline: selected ? `2px solid` : 'none',
+                    outlineColor: color,
+                    outlineOffset: 2,
+                    transition: 'all 0.15s ease',
+                    '&:hover': { opacity: 0.85 },
+                  }}
+                />
+              </Tooltip>
+            );
+          })}
         </Stack>
+        {selectedRoomStatusFilter && (
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {STATUS_OPTIONS.find((o) => o.value === selectedRoomStatusFilter)?.label}
+          </Typography>
+        )}
       </Stack>
-      <Stack py={1} gap={1}>
-        <Typography variant="caption" textAlign="center">
-          Цена
+
+      <Divider />
+
+      {/* Price range */}
+      <Stack py={2} gap={1.5}>
+        <Typography variant="overline" sx={{ color: 'text.secondary', fontSize: 10 }}>
+          Цена (USD)
         </Typography>
-        <Stack direction="row" alignItems="center" justifyContent="center">
+        <Box px={1}>
           <Slider
-            getAriaLabel={() => 'Temperature range'}
             value={selectedRoomPriceFilter}
-            onChange={handleChangePrice}
+            onChange={(_, v) => onTogglePrice(v)}
             valueLabelDisplay="auto"
-            getAriaValueText={valuetext}
+            getAriaValueText={(v) => `${v} $`}
+            size="small"
             {...sliderOptions}
           />
+        </Box>
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {selectedRoomPriceFilter?.[0]?.toLocaleString()} $
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {selectedRoomPriceFilter?.[1]?.toLocaleString()} $
+          </Typography>
         </Stack>
       </Stack>
-      {/* <Stack py={2} gap={1}>
-        <Typography variant="caption" textAlign="center">
-          Площадь
-        </Typography>
-        <Stack direction="row" alignItems="center" justifyContent="center">
-          <ToggleButtonGroup
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-            }}
-            color="primary"
-            size="small"
-            {...controlArea}
-          >
-            {areaFilterOptions?.map((item) => (
-              <ToggleButton
-                sx={{ marginLeft: '4px !important' }}
-                value={item.apartment_area}
-                key={item.apartment_area}
-              >
-                {item.apartment_area} м2
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        </Stack>
-      </Stack> */}
 
       <Divider />
     </Stack>
@@ -265,7 +160,7 @@ export default function CheckerboardFilterSidebar({
 CheckerboardFilterSidebar.propTypes = {
   selectedRoomFilter: PropTypes.string,
   selectedRoomStatusFilter: PropTypes.string,
-  selectedRoomPriceFilter: PropTypes.string,
+  selectedRoomPriceFilter: PropTypes.array,
   selectedRoomAreaFilter: PropTypes.string,
   onToggle: PropTypes.func,
   onToggleStatus: PropTypes.func,

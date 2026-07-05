@@ -1,6 +1,6 @@
 import useSWR from 'swr';
-import queryString from 'query-string';
 import { useMemo } from 'react';
+import queryString from 'query-string';
 
 import { fetcher, endpoints } from 'src/utils/axios';
 

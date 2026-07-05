@@ -24,8 +24,8 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { fNumber } from 'src/utils/format-number';
 import { fDate } from 'src/utils/format-time';
+import { fNumber } from 'src/utils/format-number';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';

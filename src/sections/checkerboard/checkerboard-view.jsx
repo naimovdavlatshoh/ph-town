@@ -1,140 +1,43 @@
 import PropTypes from 'prop-types';
-import isEqual from 'lodash/isEqual';
 import { useState, useEffect, useCallback } from 'react';
 
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import Tooltip from '@mui/material/Tooltip';
 import Container from '@mui/material/Container';
-import { GridActionsCellItem } from '@mui/x-data-grid';
-import { Card, Stack, Typography } from '@mui/material';
+import Typography from '@mui/material/Typography';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
-
-import { useBoolean } from 'src/hooks/use-boolean';
-import { useResponsive } from 'src/hooks/use-responsive';
-
-import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
 import { useGetCheckerboard } from 'src/api/checkerboard';
 
 import Iconify from 'src/components/iconify';
-import { useSnackbar } from 'src/components/snackbar';
-import { ConfirmDialog } from 'src/components/custom-dialog';
-import { useSettingsContext } from 'src/components/settings';
 import { LoadingScreen } from 'src/components/loading-screen';
 
 import Grid from './Grid-Test';
-import CheckerboardStatusbar from './checkerboard-statusbar';
 import VisualImageMapper from '../image-map/VisualIImageMapper';
-import CheckerboardFilterSidebar from './checkboard-filter-sidebar';
-import CheckerBoardFilterDrawer from './checkerboard-filter-drawer';
-import {
-  RenderCellStock,
-  RenderCellPrice,
-  RenderCellPublish,
-  RenderCellProduct,
-  RenderCellCreatedAt,
-} from './client-table-row';
 
 // ----------------------------------------------------------------------
 
-const ENTITIES_OPTIONS = [
-  { value: 'individual', label: 'Физическое лицо' },
-  { value: 'legal', label: 'Юридическое лицо' },
+const STATUS_OPTIONS = [
+  { value: '1', label: 'Свободно', color: '#22c55e' },
+  { value: '2', label: 'Забронировано', color: '#f59e0b' },
+  { value: '3', label: 'Продано', color: '#ef4444' },
 ];
-
-const defaultFilters = {
-  publish: [],
-  stock: [],
-};
-
-const HIDE_COLUMNS = {
-  category: false,
-};
-
-const HIDE_COLUMNS_TOGGLABLE = ['category', 'actions'];
 
 // ----------------------------------------------------------------------
 
 export default function CheckerboardView({ objectId }) {
-  const { enqueueSnackbar } = useSnackbar();
-
-  const confirmRows = useBoolean();
-  const filterSetting = useBoolean();
-
-  const router = useRouter();
-
-  const settings = useSettingsContext();
+  const [type, setType] = useState('checkerboard');
+  const [roomsCountFilter, setRoomsCountFilter] = useState(null);
+  const [roomsStatusFilter, setRoomsStatusFilter] = useState(null);
 
   const { checkerboard, reserve, dereserve, checkerboardLoading } = useGetCheckerboard(objectId);
 
-  const [tableData, setTableData] = useState([]);
-
-  const [filters, setFilters] = useState(defaultFilters);
-
-  const [selectedRowIds, setSelectedRowIds] = useState([]);
-
-  const [columnVisibilityModel, setColumnVisibilityModel] = useState(HIDE_COLUMNS);
-
-  const [type, setType] = useState('checkerboard');
-
-  const dataFiltered = applyFilter({
-    inputData: tableData,
-    filters,
-  });
-
-  const canReset = !isEqual(defaultFilters, filters);
-
-  const handleFilters = useCallback((name, value) => {
-    setFilters((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  }, []);
-
-  const handleResetFilters = useCallback(() => {
-    setFilters(defaultFilters);
-  }, []);
-
-  const handleDeleteRow = useCallback(
-    (id) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
-
-      enqueueSnackbar('Delete success!');
-
-      setTableData(deleteRow);
-    },
-    [enqueueSnackbar, tableData]
-  );
-
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !selectedRowIds.includes(row.id));
-
-    enqueueSnackbar('Delete success!');
-
-    setTableData(deleteRows);
-  }, [enqueueSnackbar, selectedRowIds, tableData]);
-
-  const handleEditRow = useCallback(
-    (id) => {
-      router.push(paths.dashboard.clients.edit(id));
-    },
-    [router]
-  );
-
-  const handleViewRow = useCallback(
-    (id) => {
-      router.push(paths.dashboard.clients.details(id));
-    },
-    [router]
-  );
-
-  const [roomsCountFilter, setRoomsCountFilter] = useState();
-  const [roomsStatusFilter, setRoomsStatusFilter] = useState();
-  const [roomsAreaFilter, setRoomsAreaFilter] = useState();
-  const [roomsPriceFilter, setRoomsPriceFilter] = useState([
-    Number(checkerboard?.min_price_apartment),
-    Number(checkerboard?.max_price_apartment),
-  ]);
+  const [roomsPriceFilter, setRoomsPriceFilter] = useState([0, 99999999]);
 
   useEffect(() => {
     if (checkerboard) {
@@ -145,317 +48,164 @@ export default function CheckerboardView({ objectId }) {
     }
   }, [checkerboard]);
 
-  const columns = [
-    {
-      field: 'category',
-      headerName: 'Category',
-      filterable: false,
-    },
-    {
-      field: 'name',
-      headerName: 'Product',
-      flex: 1,
-      minWidth: 360,
-      hideable: false,
-      renderCell: (params) => <RenderCellProduct params={params} />,
-    },
-    {
-      field: 'createdAt',
-      headerName: 'Create at',
-      width: 160,
-      renderCell: (params) => <RenderCellCreatedAt params={params} />,
-    },
-    {
-      field: 'inventoryType',
-      headerName: 'Stock',
-      width: 160,
-      type: 'singleSelect',
-      valueOptions: PRODUCT_STOCK_OPTIONS,
-      renderCell: (params) => <RenderCellStock params={params} />,
-    },
-    {
-      field: 'price',
-      headerName: 'Price',
-      width: 140,
-      editable: true,
-      renderCell: (params) => <RenderCellPrice params={params} />,
-    },
-    {
-      field: 'entityType',
-      headerName: 'Тип клиента',
-      width: 110,
-      type: 'singleSelect',
-      editable: true,
-      valueOptions: ENTITIES_OPTIONS,
-      renderCell: (params) => <RenderCellPublish params={params} />,
-    },
-    {
-      type: 'actions',
-      field: 'actions',
-      headerName: ' ',
-      align: 'right',
-      headerAlign: 'right',
-      width: 80,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      getActions: (params) => [
-        <GridActionsCellItem
-          showInMenu
-          icon={<Iconify icon="solar:eye-bold" />}
-          label="View"
-          onClick={() => handleViewRow(params.row.id)}
-        />,
-        <GridActionsCellItem
-          showInMenu
-          icon={<Iconify icon="solar:pen-bold" />}
-          label="Edit"
-          onClick={() => handleEditRow(params.row.id)}
-        />,
-        <GridActionsCellItem
-          showInMenu
-          icon={<Iconify icon="solar:trash-bin-trash-bold" />}
-          label="Delete"
-          onClick={() => {
-            handleDeleteRow(params.row.id);
-          }}
-          sx={{ color: 'error.main' }}
-        />,
-      ],
-    },
-  ];
+  const priceMin = Number(checkerboard?.min_price_apartment) || 0;
+  const priceMax = Number(checkerboard?.max_price_apartment) || 99999999;
 
-  const lgUp = useResponsive('up', 'lg');
+  const hasFilter = roomsCountFilter !== null || roomsStatusFilter !== null;
 
-  const getTogglableColumns = () =>
-    columns
-      .filter((column) => !HIDE_COLUMNS_TOGGLABLE.includes(column.field))
-      .map((column) => column.field);
+  const handleClear = useCallback(() => {
+    setRoomsCountFilter(null);
+    setRoomsStatusFilter(null);
+    setRoomsPriceFilter([priceMin, priceMax]);
+  }, [priceMin, priceMax]);
 
   return checkerboardLoading ? (
     <LoadingScreen title="Загружается шахматка..." />
   ) : (
-    <>
-      <Container
-        maxWidth="100%"
-        sx={{
-          flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <Stack direction={lgUp ? 'row' : 'column'} gap={2}>
-          <Stack width="300px" display={!lgUp || type === 'visual' ? 'none' : ''}>
-            <Card sx={{ padding: 2 }}>
-              <CheckerboardFilterSidebar
-                areaFilterOptions={checkerboard?.apartment_area_list}
-                selectedRoomFilter={roomsCountFilter}
-                selectedRoomStatusFilter={roomsStatusFilter}
-                selectedRoomAreaFilter={roomsAreaFilter}
-                selectedRoomPriceFilter={roomsPriceFilter}
-                onToggle={(count) => {
-                  if (count === roomsCountFilter) {
-                    setRoomsCountFilter(null);
-                  } else {
-                    setRoomsCountFilter(count);
-                  }
-                }}
-                onToggleStatus={(status) => {
-                  if (status === roomsStatusFilter) {
-                    setRoomsStatusFilter(null);
-                  } else {
-                    setRoomsStatusFilter(status);
-                  }
-                }}
-                onToggleArea={(area) => {
-                  if (area === roomsAreaFilter) {
-                    setRoomsAreaFilter(null);
-                  } else {
-                    setRoomsAreaFilter(area);
-                  }
-                }}
-                onTogglePrice={(status) => {
-                  setRoomsPriceFilter(status);
-                }}
-                onClear={() => {
-                  setRoomsCountFilter(null);
-                  setRoomsStatusFilter(null);
-                  setRoomsPriceFilter([
-                    Number(checkerboard?.min_price_apartment),
-                    Number(checkerboard?.max_price_apartment),
-                  ]);
-                  setRoomsAreaFilter(null);
-                }}
-                sliderOptions={{
-                  min: checkerboard?.min_price_apartment,
-                  max: checkerboard?.max_price_apartment,
-                  marks: [
-                    {
-                      value: Number(checkerboard?.min_price_apartment),
-                      label: (
-                        <Typography marginLeft={5} variant="caption">
-                          {checkerboard?.min_price_apartment} UZS
-                        </Typography>
-                      ),
-                    },
-                    {
-                      value: Number(checkerboard?.max_price_apartment),
-                      label: (
-                        <Typography marginRight={5} variant="caption">
-                          {checkerboard?.max_price_apartment} UZS
-                        </Typography>
-                      ),
-                    },
-                  ],
-                }}
-              />
-            </Card>
-          </Stack>
-          <Stack width={!lgUp || type === 'visual' ? '100%' : 'calc(100% - 300px)'}>
-            <Card sx={{ padding: 3 }}>
-              <CheckerboardStatusbar
-                type={type}
-                setType={setType}
-                openFilter={filterSetting.onTrue}
-              />
-              {type === 'checkerboard' ? (
-                <Grid
-                  checkerboard={checkerboard}
-                  roomsCountFilter={roomsCountFilter}
-                  roomsStatusFilter={roomsStatusFilter}
-                  roomsPriceFilter={roomsPriceFilter}
-                  roomsAreaFilter={roomsAreaFilter}
-                  reserve={reserve}
-                  dereserve={dereserve}
-                />
-              ) : (
-                // checkerboard?.block?.map((ch, idx) => (
-                //   <CheckerboardTable
-                //     reserve={reserve}
-                //     dereserve={dereserve}
-                //     key={idx}
-                //     data={ch}
-                //     roomsCountFilter={roomsCountFilter}
-                //     roomsStatusFilter={roomsStatusFilter}
-                //     roomsPriceFilter={roomsPriceFilter}
-                //     roomsAreaFilter={roomsAreaFilter}
-                //   />
-                // ))
-                <Stack overflow="auto" alignItems="center">
-                  <VisualImageMapper projectId={objectId} />
-                </Stack>
-              )}
-            </Card>
-          </Stack>
-        </Stack>
-      </Container>
+    <Container maxWidth="100%" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+      <Card sx={{ padding: 3 }}>
 
-      <CheckerBoardFilterDrawer
-        filterSetting={filterSetting}
-        filterOptions={{
-          areaFilterOptions: checkerboard?.apartment_area_list,
-          selectedRoomFilter: roomsCountFilter,
-          selectedRoomStatusFilter: roomsStatusFilter,
-          selectedRoomAreaFilter: roomsAreaFilter,
-          selectedRoomPriceFilter: roomsPriceFilter,
-          onToggle: (count) => {
-            if (count === roomsCountFilter) {
-              setRoomsCountFilter(null);
-            } else {
-              setRoomsCountFilter(count);
-            }
-          },
-          onToggleStatus: (status) => {
-            if (status === roomsStatusFilter) {
-              setRoomsStatusFilter(null);
-            } else {
-              setRoomsStatusFilter(status);
-            }
-          },
-          onToggleArea: (area) => {
-            if (area === roomsAreaFilter) {
-              setRoomsAreaFilter(null);
-            } else {
-              setRoomsAreaFilter(area);
-            }
-          },
-          onTogglePrice: (status) => {
-            setRoomsPriceFilter(status);
-          },
-          onClear: () => {
-            setRoomsCountFilter(null);
-            setRoomsStatusFilter(null);
-            setRoomsPriceFilter([
-              Number(checkerboard?.min_price_apartment),
-              Number(checkerboard?.max_price_apartment),
-            ]);
-            setRoomsAreaFilter(null);
-          },
-          sliderOptions: {
-            min: checkerboard?.min_price_apartment,
-            max: checkerboard?.max_price_apartment,
-            marks: [
-              {
-                value: Number(checkerboard?.min_price_apartment),
-                label: (
-                  <Typography marginLeft={5} variant="caption">
-                    {checkerboard?.min_price_apartment} UZS
-                  </Typography>
-                ),
-              },
-              {
-                value: Number(checkerboard?.max_price_apartment),
-                label: (
-                  <Typography marginRight={5} variant="caption">
-                    {checkerboard?.max_price_apartment} UZS
-                  </Typography>
-                ),
-              },
-            ],
-          },
-        }}
-      />
+        {/* ── Single toolbar: filters + mode toggle ── */}
+        <Stack
+          direction="row"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={2}
+          mb={3}
+        >
+          {/* Rooms count */}
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Typography variant="caption" fontWeight={600} sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+              Комнат:
+            </Typography>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={roomsCountFilter}
+              onChange={(_, v) => setRoomsCountFilter(v)}
+            >
+              {['1', '2', '3', '4', '5'].map((n) => (
+                <ToggleButton
+                  key={n}
+                  value={n}
+                  color="primary"
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    fontWeight: 700,
+                    fontSize: 13,
+                    borderRadius: '8px !important',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  {n}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          </Stack>
 
-      <ConfirmDialog
-        open={confirmRows.value}
-        onClose={confirmRows.onFalse}
-        title="Delete"
-        content={
-          <>
-            Are you sure want to delete <strong> {selectedRowIds?.length} </strong> items?
-          </>
-        }
-        action={
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => {
-              handleDeleteRows();
-              confirmRows.onFalse();
+          <Divider orientation="vertical" flexItem />
+
+          {/* Status */}
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Typography variant="caption" fontWeight={600} sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+              Статус:
+            </Typography>
+            <Stack direction="row" gap={0.75}>
+              {STATUS_OPTIONS.map(({ value, label, color }) => {
+                const selected = roomsStatusFilter === value;
+                return (
+                  <Tooltip key={value} title={label} arrow>
+                    <Box
+                      onClick={() => setRoomsStatusFilter(selected ? null : value)}
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '7px',
+                        bgcolor: color,
+                        opacity: selected ? 1 : 0.28,
+                        cursor: 'pointer',
+                        outline: selected ? `2px solid ${color}` : '2px solid transparent',
+                        outlineOffset: 2,
+                        transition: 'all 0.15s ease',
+                        '&:hover': { opacity: 0.85 },
+                      }}
+                    />
+                  </Tooltip>
+                );
+              })}
+            </Stack>
+          </Stack>
+
+          <Divider orientation="vertical" flexItem />
+
+          {/* Mode toggle + 360 Tour */}
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={type}
+            onChange={(_, v) => {
+              if (v === '360tour') {
+                window.open('https://vr.ph.town/', '_blank', 'noopener');
+              } else if (v !== null) {
+                setType(v);
+              }
             }}
           >
-            Delete
-          </Button>
-        }
-      />
-    </>
+            <ToggleButton color="primary" value="checkerboard" sx={{ px: 1.5, gap: 0.5, height: 34 }}>
+              <Iconify icon="bxs:chess" width={16} />
+              Шахматка
+            </ToggleButton>
+            <ToggleButton color="primary" value="visual" sx={{ px: 1.5, gap: 0.5, height: 34, display: 'none' }}>
+              <Iconify icon="lets-icons:3d-box" width={16} />
+              Визуальное
+            </ToggleButton>
+            <ToggleButton color="success" value="360tour" sx={{ px: 1.5, gap: 0.5, height: 34 }}>
+              <Iconify icon="mdi:rotate-360" width={16} />
+              360 Tour
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          {/* Clear — only when filter active */}
+          {hasFilter && (
+            <>
+              <Divider orientation="vertical" flexItem />
+              <Button
+                size="small"
+                color="error"
+                variant="soft"
+                onClick={handleClear}
+                startIcon={<Iconify icon="pajamas:clear-all" width={14} />}
+                sx={{ height: 34, whiteSpace: 'nowrap' }}
+              >
+                Очистить
+              </Button>
+            </>
+          )}
+        </Stack>
+
+        <Divider sx={{ mb: 3 }} />
+
+        {/* ── Content ── */}
+        {type === 'checkerboard' ? (
+          <Grid
+            checkerboard={checkerboard}
+            roomsCountFilter={roomsCountFilter}
+            roomsStatusFilter={roomsStatusFilter}
+            roomsPriceFilter={roomsPriceFilter}
+            roomsAreaFilter={null}
+            reserve={reserve}
+            dereserve={dereserve}
+          />
+        ) : (
+          <Stack overflow="auto" alignItems="center">
+            <VisualImageMapper projectId={objectId} />
+          </Stack>
+        )}
+      </Card>
+    </Container>
   );
-}
-
-// ----------------------------------------------------------------------
-
-function applyFilter({ inputData, filters }) {
-  const { stock, publish } = filters;
-
-  if (stock?.length) {
-    inputData = inputData.filter((product) => stock.includes(product.inventoryType));
-  }
-
-  if (publish?.length) {
-    inputData = inputData.filter((product) => publish.includes(product.publish));
-  }
-
-  return inputData;
 }
 
 CheckerboardView.propTypes = {
