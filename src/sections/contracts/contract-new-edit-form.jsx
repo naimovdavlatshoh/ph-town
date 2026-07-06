@@ -48,6 +48,14 @@ const getMonthlyPaymentAuto = (type) => {
   return 'Автоматически';
 };
 
+// is_barter в форме — строка ('1' | '2' | ''). На бэке признак бартера хранится
+// в barter_type (1|2), поэтому при редактировании читаем его, с фолбэком на is_barter.
+const getIsBarterValue = (contract) => {
+  if (contract?.barter_type) return String(contract.barter_type);
+  if (contract?.is_barter) return String(contract.is_barter);
+  return '';
+};
+
 // ----------------------------------------------------------------------
 // Единая формула суммы (синхронно с бэком):
 // total_price = price_square_meter($) * apartment_area * contract_exchange_rate
@@ -124,11 +132,40 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
     ),
     contract_date: Yup.string().required('Выберите дату'),
     comments: Yup.string().required('Введите комментарий'),
+    barter_object: Yup.string().when('is_barter', ([is_barter], schema) =>
+      is_barter === '1' ? schema.required('Выберите тип бартера') : schema
+    ),
+    appraised_value: Yup.string().when('is_barter', ([is_barter], schema) =>
+      is_barter === '1' ? schema.required('Введите сумму оценки') : schema
+    ),
+    barter_comments: Yup.string(),
+    supplier_id: Yup.string().when('is_barter', ([is_barter], schema) =>
+      is_barter === '2' ? schema.required('Выберите поставщика') : schema
+    ),
+    percent_apartment: Yup.string().when('is_barter', ([is_barter], schema) =>
+      is_barter === '2' ? schema.required('Введите процент квартиры') : schema
+    ),
+    percent_supplier: Yup.string().when('is_barter', ([is_barter], schema) =>
+      is_barter === '2' ? schema.required('Введите процент поставщика') : schema
+    ),
   });
 
   const defaultValues = useMemo(
     () => ({
-      is_barter: '',
+      is_barter: getIsBarterValue(currentContract),
+      barter_object: currentContract?.barter_object || '',
+      appraised_value: currentContract?.appraised_value || '',
+      barter_comments: currentContract?.barter_comments || '',
+      supplier_id: currentContract?.supplier_id || '',
+      supplier_name: currentContract?.supplier_name || '',
+      supplier: currentContract?.supplier_id
+        ? {
+            supplier_id: currentContract.supplier_id,
+            supplier_name: currentContract.supplier_name || '',
+          }
+        : null,
+      percent_apartment: currentContract?.percent_apartment || '',
+      percent_supplier: currentContract?.percent_supplier || '',
       client: currentContract
         ? {
             client_id: currentContract?.client_id,
@@ -249,6 +286,25 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
       );
       methods.setValue('contract_cash_type', getContractCashType(currentContract?.contract_cash_type));
       methods.setValue('contract_exchange_rate', currentContract?.contract_exchange_rate || '');
+
+      // --- Бартер ---
+      methods.setValue('is_barter', getIsBarterValue(currentContract));
+      methods.setValue('barter_object', currentContract?.barter_object || '');
+      methods.setValue('appraised_value', currentContract?.appraised_value || '');
+      methods.setValue('barter_comments', currentContract?.barter_comments || '');
+      methods.setValue('supplier_id', currentContract?.supplier_id || '');
+      methods.setValue('supplier_name', currentContract?.supplier_name || '');
+      methods.setValue(
+        'supplier',
+        currentContract?.supplier_id
+          ? {
+              supplier_id: currentContract.supplier_id,
+              supplier_name: currentContract.supplier_name || '',
+            }
+          : null
+      );
+      methods.setValue('percent_apartment', currentContract?.percent_apartment || '');
+      methods.setValue('percent_supplier', currentContract?.percent_supplier || '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentContract]);
@@ -340,7 +396,20 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
       ),
       initial_payment: parseFloat(data?.initialPayment?.replace(/,/g, '')),
       comments: data?.comments,
-      is_barter: data.is_barter ? 1 : 0,
+      is_barter: data.is_barter === '1' || data.is_barter === '2' ? 1 : 0,
+      barter_type:
+        data.is_barter === '1' || data.is_barter === '2' ? Number(data.is_barter) : null,
+      ...(data.is_barter === '1' && {
+        barter_object: Number(data.barter_object),
+        appraised_value: parseFloat(String(data.appraised_value).replace(/,/g, '')),
+        barter_comments: (data.barter_comments || '').trim(),
+      }),
+      ...(data.is_barter === '2' && {
+        supplier_id: Number(data.supplier_id),
+        supplier_name: data.supplier_name || '',
+        percent_apartment: parseFloat(String(data.percent_apartment).replace(/,/g, '')) || 0,
+        percent_supplier: parseFloat(String(data.percent_supplier).replace(/,/g, '')) || 0,
+      }),
       contract_cash_type: data?.contract_cash_type === 'SUM' ? 1 : 0,
       contract_exchange_rate: rate,
     };

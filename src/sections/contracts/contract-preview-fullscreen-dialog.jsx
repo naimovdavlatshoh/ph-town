@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 
 import moment from 'moment';
+import { useSnackbar } from 'notistack';
 
 import { Stack } from '@mui/system';
 import { Button } from '@mui/material';
@@ -51,6 +52,7 @@ export default function ContractPreivewFullscreenDialog({
   isPrint = false,
 }) {
   const router = useRouter();
+  const { enqueueSnackbar } = useSnackbar();
   const [html, setHtml] = useState('');
   const [comments, setComments] = useState([]);
 
@@ -59,6 +61,26 @@ export default function ContractPreivewFullscreenDialog({
   const [marginTop, setMarginTop] = useState(50);
 
   const handleCreate = () => {
+    // Проверка полей бартера 1
+    if (data.is_barter === '1') {
+      if (
+        !data.barter_object ||
+        !data.appraised_value ||
+        parseFloat(String(data.appraised_value).replace(/,/g, '')) <= 0 ||
+        !data.barter_comments ||
+        data.barter_comments.trim() === ''
+      ) {
+        enqueueSnackbar('Заполните все поля бартера!', { variant: 'error' });
+        return;
+      }
+    }
+    // Проверка полей бартера 2
+    if (data.is_barter === '2') {
+      if (!data.supplier_id || !data.percent_apartment || !data.percent_supplier) {
+        enqueueSnackbar('Заполните все поля бартера 2!', { variant: 'error' });
+        return;
+      }
+    }
     if (data.paymentType === 'Наличными') {
       const newData = {
         created_at: moment(data?.contract_date).valueOf(),
@@ -71,7 +93,20 @@ export default function ContractPreivewFullscreenDialog({
         total_price: data?.totalAmount,
         initial_payment: parseFloat(data?.initialPayment?.replace(/,/g, '')),
         comments: data?.comments,
-        is_barter: data.is_barter ? 1 : 0,
+        is_barter: data.is_barter === '1' || data.is_barter === '2' ? 1 : 0,
+        barter_type:
+          data.is_barter === '1' || data.is_barter === '2' ? Number(data.is_barter) : null,
+        ...(data.is_barter === '1' && {
+          barter_object: Number(data.barter_object),
+          appraised_value: parseFloat(String(data.appraised_value).replace(/,/g, '')),
+          barter_comments: (data.barter_comments || '').trim(),
+        }),
+        ...(data.is_barter === '2' && {
+          supplier_id: Number(data.supplier_id),
+          supplier_name: data.supplier_name || '',
+          percent_apartment: parseFloat(String(data.percent_apartment).replace(/,/g, '')) || 0,
+          percent_supplier: parseFloat(String(data.percent_supplier).replace(/,/g, '')) || 0,
+        }),
         contract_cash_type: data?.contract_cash_type === 'SUM' ? 1 : 0,
         contract_exchange_rate: data?.contract_exchange_rate
           ? parseFloat(
@@ -99,7 +134,20 @@ export default function ContractPreivewFullscreenDialog({
         monthly_fee: data?.monthly_fee,
         payment_day: data?.mounthPayList?.map((mp) => moment(mp.date).format('DD-MM-YYYY')),
         comments: data?.comments,
-        is_barter: data.is_barter ? 1 : 0,
+        is_barter: data.is_barter === '1' || data.is_barter === '2' ? 1 : 0,
+        barter_type:
+          data.is_barter === '1' || data.is_barter === '2' ? Number(data.is_barter) : null,
+        ...(data.is_barter === '1' && {
+          barter_object: Number(data.barter_object),
+          appraised_value: parseFloat(String(data.appraised_value).replace(/,/g, '')),
+          barter_comments: (data.barter_comments || '').trim(),
+        }),
+        ...(data.is_barter === '2' && {
+          supplier_id: Number(data.supplier_id),
+          supplier_name: data.supplier_name || '',
+          percent_apartment: parseFloat(String(data.percent_apartment).replace(/,/g, '')) || 0,
+          percent_supplier: parseFloat(String(data.percent_supplier).replace(/,/g, '')) || 0,
+        }),
         contract_cash_type: data?.contract_cash_type === 'SUM' ? 1 : 0,
         contract_exchange_rate: data?.contract_exchange_rate
           ? parseFloat(
@@ -118,6 +166,26 @@ export default function ContractPreivewFullscreenDialog({
   };
 
   const handleUpdate = () => {
+    // Проверка полей бартера 1
+    if (data.is_barter === '1') {
+      if (
+        !data.barter_object ||
+        !data.appraised_value ||
+        parseFloat(String(data.appraised_value).replace(/,/g, '')) <= 0 ||
+        !data.barter_comments ||
+        data.barter_comments.trim() === ''
+      ) {
+        enqueueSnackbar('Заполните все поля бартера!', { variant: 'error' });
+        return;
+      }
+    }
+    // Проверка полей бартера 2
+    if (data.is_barter === '2') {
+      if (!data.supplier_id || !data.percent_apartment || !data.percent_supplier) {
+        enqueueSnackbar('Заполните все поля бартера 2!', { variant: 'error' });
+        return;
+      }
+    }
     if (data.paymentType === 'Наличными') {
       const newData = {
         contract_id: data?.contract_id,
@@ -131,7 +199,20 @@ export default function ContractPreivewFullscreenDialog({
         total_price: data?.totalAmount,
         initial_payment: parseFloat(data?.initialPayment?.replace(/,/g, '')),
         comments: data?.comments,
-        is_barter: data.is_barter ? 1 : 0,
+        is_barter: data.is_barter === '1' || data.is_barter === '2' ? 1 : 0,
+        barter_type:
+          data.is_barter === '1' || data.is_barter === '2' ? Number(data.is_barter) : null,
+        ...(data.is_barter === '1' && {
+          barter_object: Number(data.barter_object),
+          appraised_value: parseFloat(String(data.appraised_value).replace(/,/g, '')),
+          barter_comments: (data.barter_comments || '').trim(),
+        }),
+        ...(data.is_barter === '2' && {
+          supplier_id: Number(data.supplier_id),
+          supplier_name: data.supplier_name || '',
+          percent_apartment: parseFloat(String(data.percent_apartment).replace(/,/g, '')) || 0,
+          percent_supplier: parseFloat(String(data.percent_supplier).replace(/,/g, '')) || 0,
+        }),
         contract_cash_type: data?.contract_cash_type === 'SUM' ? 1 : 0,
         contract_exchange_rate: data?.contract_exchange_rate
           ? parseFloat(
@@ -164,7 +245,20 @@ export default function ContractPreivewFullscreenDialog({
             : moment(mp.date, 'DD-MM-YYYY').format('DD-MM-YYYY')
         ),
         comments: data?.comments,
-        is_barter: data.is_barter ? 1 : 0,
+        is_barter: data.is_barter === '1' || data.is_barter === '2' ? 1 : 0,
+        barter_type:
+          data.is_barter === '1' || data.is_barter === '2' ? Number(data.is_barter) : null,
+        ...(data.is_barter === '1' && {
+          barter_object: Number(data.barter_object),
+          appraised_value: parseFloat(String(data.appraised_value).replace(/,/g, '')),
+          barter_comments: (data.barter_comments || '').trim(),
+        }),
+        ...(data.is_barter === '2' && {
+          supplier_id: Number(data.supplier_id),
+          supplier_name: data.supplier_name || '',
+          percent_apartment: parseFloat(String(data.percent_apartment).replace(/,/g, '')) || 0,
+          percent_supplier: parseFloat(String(data.percent_supplier).replace(/,/g, '')) || 0,
+        }),
         contract_cash_type: data?.contract_cash_type === 'SUM' ? 1 : 0,
         contract_exchange_rate: data?.contract_exchange_rate
           ? parseFloat(
