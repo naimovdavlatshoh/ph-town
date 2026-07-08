@@ -355,12 +355,12 @@ export function useNavData() {
             icon: ICONS.statistic,
             roles: ['1'],
           },
-          {
-            title: t('Материалы'),
-            path: paths.dashboard.product2,
-            icon: ICONS.product,
-            roles: ['1', '4', '6'],
-          },
+          // {
+          //   title: t('Материалы'),
+          //   path: paths.dashboard.product2,
+          //   icon: ICONS.product,
+          //   roles: ['1', '4', '6'],
+          // },
           {
             title: t('Клиенты'),
             path: paths.dashboard.clients.root,
@@ -403,12 +403,12 @@ export function useNavData() {
             icon: ICONS.calendar,
             roles: ['1', '2', '5'],
           },
-          {
-            title: t('Касса-Банк'),
-            path: paths.dashboard.bank.root,
-            icon: ICONS.expense,
-            roles: ['1', '7'],
-          },
+          // {
+          //   title: t('Касса-Банк'),
+          //   path: paths.dashboard.bank.root,
+          //   icon: ICONS.expense,
+          //   roles: ['1', '7'],
+          // },
           // {
           //   title: t('Касса-Склад'),
           //   path: paths.dashboard.payments.kassaSklad,
@@ -433,12 +433,12 @@ export function useNavData() {
             icon: ICONS.users,
             roles: ['1'],
           },
-          {
-            title: t('Контрагенты'),
-            path: paths.dashboard.contragents.root,
-            icon: ICONS.helmet,
-            roles: ['1', '4', '6'],
-          },
+          // {
+          //   title: t('Контрагенты'),
+          //   path: paths.dashboard.contragents.root,
+          //   icon: ICONS.helmet,
+          //   roles: ['1', '4', '6'],
+          // },
           {
             title: t('Риэлторы'),
             path: paths.dashboard.realtors.root,
