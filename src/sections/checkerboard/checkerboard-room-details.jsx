@@ -223,7 +223,10 @@ export default function CheckerboardRoomDetails({
   const totalUZS = currency * totalUSD;
   const initialVal = Number(methods.watch('initialPrice')?.replace(/,/g, '') || 0);
   const months = Number(methods.watch('timeAnother') || methods.watch('time') || 1);
-  const monthly = dollarCurrency ? (totalUSD - initialVal) / months : (totalUZS - initialVal) / months;
+  const remaining = (dollarCurrency ? totalUSD : totalUZS) - initialVal;
+  // Платёж — целое число (округление вниз); накопленный остаток идёт в последний месяц.
+  const monthly = Math.floor(remaining / months);
+  const lastMonthly = remaining - monthly * (months - 1);
 
   // ── Печать: на экране показываем модал (.notPrint), а на печать —
   // отдельный чистый лист (.print). CSS @media print скрывает интерфейс
@@ -386,7 +389,7 @@ export default function CheckerboardRoomDetails({
                       </Typography>
                       <Stack direction="row" alignItems="center" gap={0.5}>
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {fNumber(priceSquareMeter)} USD/м²
+                          {fNumber(priceSquareMeter * currency)} UZS/м²
                         </Typography>
                         <IconButton size="small" color="warning" onClick={editAreaPrice.onTrue} sx={{ width: 20, height: 20 }}>
                           <Iconify icon="dashicons:edit" width={13} />
@@ -437,20 +440,33 @@ export default function CheckerboardRoomDetails({
                 {/* Options */}
                 {apartment?.apartment_option?.length > 0 && (
                   <Box>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', mb: 0.75, display: 'block' }}>
+                    <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
                       Опции
                     </Typography>
-                    <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                    <Stack direction="row" flexWrap="wrap" gap={1}>
                       {apartment?.apartment_option?.map((opt) => {
                         const cfg = OPTION_CONFIG[opt.option_id] || {};
                         return (
                           <Chip
                             key={opt.option_value_id}
-                            size="small"
-                            icon={cfg.icon ? <Iconify icon={cfg.icon} width={14} /> : undefined}
+                            icon={cfg.icon ? <Iconify icon={cfg.icon} width={18} /> : undefined}
                             label={opt.option_name}
-                            variant="outlined"
-                            sx={{ fontSize: 11, height: 26 }}
+                            sx={{
+                              height: 34,
+                              fontSize: 13,
+                              fontWeight: 600,
+                              borderRadius: 1.5,
+                              px: 0.5,
+                              color: 'primary.dark',
+                              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                              border: '1px solid',
+                              borderColor: (theme) => alpha(theme.palette.primary.main, 0.24),
+                              '& .MuiChip-icon': { color: 'primary.main', ml: 0.5 },
+                              transition: 'background-color 0.15s ease',
+                              '&:hover': {
+                                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.18),
+                              },
+                            }}
                           />
                         );
                       })}
@@ -629,7 +645,7 @@ export default function CheckerboardRoomDetails({
                             {Array.from({ length: months }).map((_, i) => (
                               <TableRow key={i} sx={{ '&:last-child td': { border: 0 } }}>
                                 <TableCell>{i + 1}</TableCell>
-                                <TableCell align="right">{fCurrency(monthly)} {dollarCurrency ? 'USD' : 'UZS'}</TableCell>
+                                <TableCell align="right">{fCurrency(i === months - 1 ? lastMonthly : monthly)} {dollarCurrency ? 'USD' : 'UZS'}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
@@ -725,7 +741,7 @@ export default function CheckerboardRoomDetails({
                     {dollarCurrency ? `${fCurrency(totalUSD)} USD` : `${fCurrency(totalUZS)} UZS`}
                   </Label>
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {fNumber(priceSquareMeter)} USD/м²
+                    {fNumber(priceSquareMeter * currency)} UZS/м²
                   </Typography>
                 </Stack>
               </Stack>
@@ -843,7 +859,7 @@ export default function CheckerboardRoomDetails({
                     <TableRow key={i}>
                       <TableCell>{i + 1}</TableCell>
                       <TableCell align="right">
-                        {fCurrency(monthly)} {dollarCurrency ? 'USD' : 'UZS'}
+                        {fCurrency(i === months - 1 ? lastMonthly : monthly)} {dollarCurrency ? 'USD' : 'UZS'}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -899,6 +915,19 @@ export default function CheckerboardRoomDetails({
               variant="contained"
               startIcon={<Iconify icon="tdesign:delete-time" />}
               onClick={dereserveDialog.onTrue}
+              sx={{
+                borderRadius: 1.5,
+                px: 2,
+                py: 0.85,
+                fontWeight: 600,
+                textTransform: 'none',
+                boxShadow: (theme) => `0 6px 16px 0 ${alpha(theme.palette.error.main, 0.28)}`,
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: (theme) => `0 8px 20px 0 ${alpha(theme.palette.error.main, 0.4)}`,
+                },
+              }}
             >
               Удалить бронь
             </Button>
@@ -912,6 +941,19 @@ export default function CheckerboardRoomDetails({
                 variant="contained"
                 startIcon={<Iconify icon="mingcute:time-fill" />}
                 onClick={reserveModal.onTrue}
+                sx={{
+                  borderRadius: 1.5,
+                  px: 2,
+                  py: 0.85,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  boxShadow: (theme) => `0 6px 16px 0 ${alpha(theme.palette.info.main, 0.28)}`,
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: (theme) => `0 8px 20px 0 ${alpha(theme.palette.info.main, 0.4)}`,
+                  },
+                }}
               >
                 Забронировать
               </Button>
@@ -921,6 +963,15 @@ export default function CheckerboardRoomDetails({
                 startIcon={<Iconify icon="healthicons:i-documents-accepted-outline" />}
                 component={RouterLink}
                 href={paths.dashboard.contracts.new(apartment?.apartment_id)}
+                sx={{
+                  borderRadius: 1.5,
+                  px: 2,
+                  py: 0.85,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  transition: 'transform 0.15s ease',
+                  '&:hover': { transform: 'translateY(-1px)' },
+                }}
               >
                 Оформить
               </Button>
@@ -930,6 +981,15 @@ export default function CheckerboardRoomDetails({
                   color="success"
                   startIcon={<Iconify icon="mdi:rotate-360" />}
                   onClick={() => window.open(apartment.vr_url, '_blank', 'noopener')}
+                  sx={{
+                    borderRadius: 1.5,
+                    px: 2,
+                    py: 0.85,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    transition: 'transform 0.15s ease',
+                    '&:hover': { transform: 'translateY(-1px)' },
+                  }}
                 >
                   360 Tour
                 </Button>

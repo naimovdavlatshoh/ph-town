@@ -45,7 +45,7 @@ const Grid = ({
                     ? apartment.rooms_number === roomsCountFilter
                     : true,
                   isFilterRoomStatus: roomsStatusFilter
-                    ? apartment.stock_status === roomsStatusFilter
+                    ? roomsStatusFilter.includes(apartment.stock_status)
                     : true,
                   isFilterRoomArea: roomsAreaFilter
                     ? apartment.apartment_area === roomsAreaFilter
@@ -132,7 +132,7 @@ const Grid = ({
 Grid.propTypes = {
   checkerboard: PropTypes.object,
   roomsCountFilter: PropTypes.string,
-  roomsStatusFilter: PropTypes.string,
+  roomsStatusFilter: PropTypes.array,
   roomsPriceFilter: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
   roomsAreaFilter: PropTypes.string,
   reserve: PropTypes.func,

@@ -1,4 +1,6 @@
 import PropTypes from 'prop-types';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { NumericFormat } from 'react-number-format';
 import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
@@ -7,7 +9,9 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Tooltip from '@mui/material/Tooltip';
+import TextField from '@mui/material/TextField';
 import Container from '@mui/material/Container';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -23,9 +27,9 @@ import VisualImageMapper from '../image-map/VisualIImageMapper';
 // ----------------------------------------------------------------------
 
 const STATUS_OPTIONS = [
-  { value: '1', label: 'Свободно', color: '#22c55e' },
-  { value: '2', label: 'Забронировано', color: '#f59e0b' },
-  { value: '3', label: 'Продано', color: '#ef4444' },
+  { value: '1', label: 'Свободно', color: '#22c55e', statuses: ['1'] },
+  { value: '2', label: 'Забронировано / Временная бронь', color: '#f59e0b', statuses: ['2', '4'] },
+  { value: '3', label: 'Продано', color: '#ef4444', statuses: ['3'] },
 ];
 
 // ----------------------------------------------------------------------
@@ -51,7 +55,12 @@ export default function CheckerboardView({ objectId }) {
   const priceMin = Number(checkerboard?.min_price_apartment) || 0;
   const priceMax = Number(checkerboard?.max_price_apartment) || 99999999;
 
-  const hasFilter = roomsCountFilter !== null || roomsStatusFilter !== null;
+  const statusFilter = roomsStatusFilter
+    ? STATUS_OPTIONS.find((o) => o.value === roomsStatusFilter)?.statuses ?? null
+    : null;
+
+  const priceChanged = roomsPriceFilter[0] !== priceMin || roomsPriceFilter[1] !== priceMax;
+  const hasFilter = roomsCountFilter !== null || roomsStatusFilter !== null || priceChanged;
 
   const handleClear = useCallback(() => {
     setRoomsCountFilter(null);
@@ -140,6 +149,11 @@ export default function CheckerboardView({ objectId }) {
 
           <Divider orientation="vertical" flexItem />
 
+          {/* Price */}
+          <PriceFilter value={roomsPriceFilter} onApply={setRoomsPriceFilter} />
+
+          <Divider orientation="vertical" flexItem />
+
           {/* Mode toggle + 360 Tour */}
           <ToggleButtonGroup
             exclusive
@@ -192,7 +206,7 @@ export default function CheckerboardView({ objectId }) {
           <Grid
             checkerboard={checkerboard}
             roomsCountFilter={roomsCountFilter}
-            roomsStatusFilter={roomsStatusFilter}
+            roomsStatusFilter={statusFilter}
             roomsPriceFilter={roomsPriceFilter}
             roomsAreaFilter={null}
             reserve={reserve}
@@ -210,4 +224,60 @@ export default function CheckerboardView({ objectId }) {
 
 CheckerboardView.propTypes = {
   objectId: PropTypes.string,
+};
+
+// ----------------------------------------------------------------------
+
+// Изолированный фильтр цены: набор цифр меняет только локальный draft и не
+// перерисовывает шахматку. Фильтр применяется по галочке или Enter.
+function PriceFilter({ value, onApply }) {
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  const apply = () => onApply(draft);
+
+  return (
+    <Stack direction="row" alignItems="center" gap={1}>
+      <Typography variant="caption" fontWeight={600} sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+        Цена:
+      </Typography>
+      <NumericFormat
+        customInput={TextField}
+        size="small"
+        label="От"
+        thousandSeparator
+        allowNegative={false}
+        value={draft[0]}
+        onValueChange={(v) => setDraft([v.floatValue ?? 0, draft[1]])}
+        onKeyDown={(e) => e.key === 'Enter' && apply()}
+        InputLabelProps={{ shrink: true }}
+        sx={{ width: 130 }}
+      />
+      <NumericFormat
+        customInput={TextField}
+        size="small"
+        label="До"
+        thousandSeparator
+        allowNegative={false}
+        value={draft[1]}
+        onValueChange={(v) => setDraft([draft[0], v.floatValue ?? 0])}
+        onKeyDown={(e) => e.key === 'Enter' && apply()}
+        InputLabelProps={{ shrink: true }}
+        sx={{ width: 130 }}
+      />
+      <Tooltip title="Применить" arrow>
+        <IconButton color="primary" size="small" onClick={apply} sx={{ height: 34, width: 34 }}>
+          <Iconify icon="mdi:check" width={18} />
+        </IconButton>
+      </Tooltip>
+    </Stack>
+  );
+}
+
+PriceFilter.propTypes = {
+  value: PropTypes.array,
+  onApply: PropTypes.func,
 };
