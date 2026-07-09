@@ -8,13 +8,10 @@ import { useParams, useNavigate } from 'react-router';
 import { useState, useEffect, useCallback } from 'react';
 import { convert as convertNumberToWordsRu } from 'number-to-words-ru';
 
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
-import { alpha } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
@@ -34,7 +31,6 @@ import { _userList } from 'src/_mock';
 import { useAuthContext } from 'src/auth/hooks';
 import { useGetContracts, useGetOverduedays, useSearchClientsFromContract } from 'src/api/contract';
 
-import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 import { useSnackbar } from 'src/components/snackbar';
@@ -52,31 +48,17 @@ import {
 import ContractTableRow from '../contract-table-row';
 import UserTableToolbar from '../user-table-toolbar';
 import ContractsExcelDialog from '../contracts-export-dialog';
-import UserTableFiltersResult from '../user-table-filters-result';
 import ContractOverduesFullscreen from '../contract-overdues-fullscreen';
 import ContractPreivewFullscreenDialog from '../contract-preview-fullscreen-dialog';
 
 // ----------------------------------------------------------------------
-
-export const CONTRACT_TYPES_OPTIONS = [
-  { value: '0', label: 'Наличные' },
-  { value: '1', label: 'Рассрочка' },
-];
-
-export const CONTRACT_STATUS_OPTIONS = [
-  { value: '2', label: 'Подтвержденные' },
-  { value: '1', label: 'В процессе' },
-];
-
-const STATUS_OPTIONS = [{ value: 'all', label: 'Все' }, ...CONTRACT_STATUS_OPTIONS];
-const TYPES_OPTIONS = [{ value: 'all', label: 'Все' }, ...CONTRACT_TYPES_OPTIONS];
 
 const TABLE_HEAD = [
   { id: 'contract_number', label: 'Контракт' },
   { id: 'client_name', label: 'Клиент' },
   { id: 'contract_status', label: 'Состояние' },
   { id: 'contract_type', label: 'Тип' },
-  { id: 'contract_file', label: 'Файл' },
+  { id: 'contract_payment_status', label: 'Оплата' },
   { id: 'comments', label: 'Комментарий' },
   { id: 'created_at', label: 'Создано' },
   { id: '', width: 88 },
@@ -84,8 +66,12 @@ const TABLE_HEAD = [
 
 const defaultFilters = {
   client: '',
-  contractType: { value: 'all', label: 'Все' },
-  status: { value: 'all', label: 'Все' },
+  contractType: '', // '' | '0' наличка | '1' рассрочка
+  contractStatus: '', // '' | '1' в процессе | '2' подписан
+  contractPaymentStatus: '', // '' | '1' не оплачен | '2' частично | '3' полностью
+  isBarter: '', // '' | '0' нет | '1' да
+  isTerminated: '', // '' | '0' действующие | '1' расторгнутые
+  contractCashType: '', // '' | '0' USD | '1' SUM
 };
 
 // ----------------------------------------------------------------------
@@ -257,20 +243,15 @@ export default function ContractListView() {
 
   const { user } = useAuthContext();
 
-  const {
-    contracts,
-    count,
-    countConfirmed,
-    countProcess,
-    contractsLoading,
-    contractsEmpty,
-    remove,
-    terminate,
-  } = useGetContracts(
-    page + 1,
-    filters.status.value === 'all' ? '' : filters.status.value,
-    filters.contractType.value === 'all' ? '' : filters.contractType.value
-  );
+  const { contracts, count, contractsLoading, contractsEmpty, remove, terminate } = useGetContracts({
+    page: page + 1,
+    contractStatus: filters.contractStatus,
+    contractType: filters.contractType,
+    contractPaymentStatus: filters.contractPaymentStatus,
+    isBarter: filters.isBarter,
+    isTerminated: filters.isTerminated,
+    contractCashType: filters.contractCashType,
+  });
 
   const { overduedays } = useGetOverduedays();
 
@@ -309,46 +290,28 @@ export default function ContractListView() {
 
   const handleFilters = useCallback(
     (name, value) => {
-      let data = {
-        value,
-      };
-
-      if (name === 'status') {
-        data.label = STATUS_OPTIONS.find((status) => status.value === value)?.label;
-      }
-
-      if (name === 'contractType') {
-        data.label = TYPES_OPTIONS.find((contract) => contract.value === value)?.label;
-      }
-
-      if (name === 'client') {
-        data = value;
-      }
-      table.onResetPage();
+      // При смене любого фильтра сбрасываем страницу на 1 и синхронизируем URL.
+      setPage(0);
+      navigate(paths.dashboard.contracts.root);
       setFilters((prevState) => ({
         ...prevState,
-        [name]: data,
+        [name]: value,
       }));
     },
-    [table]
+    [navigate]
   );
 
   const handleResetFilters = useCallback(() => {
+    setPage(0);
+    navigate(paths.dashboard.contracts.root);
     setFilters(defaultFilters);
-  }, []);
+  }, [navigate]);
 
   const handleEditRow = useCallback(
     (id) => {
       router.push(paths.dashboard.contracts.edit(id));
     },
     [router]
-  );
-
-  const handleFilterStatus = useCallback(
-    (event, newValue) => {
-      handleFilters('status', newValue);
-    },
-    [handleFilters]
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -635,59 +598,31 @@ export default function ContractListView() {
         />
 
         <Card>
-          <Tabs
-            value={filters.status.value}
-            onChange={handleFilterStatus}
-            sx={{
-              px: 2.5,
-              boxShadow: (theme) => `inset 0 -2px 0 0 ${alpha(theme.palette.grey[500], 0.08)}`,
-            }}
+          <UserTableToolbar filters={filters} onFilters={handleFilters} />
+
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ px: 2.5, pb: 2.5 }}
           >
-            {STATUS_OPTIONS.map((tab) => (
-              <Tab
-                key={tab.value}
-                iconPosition="end"
-                value={tab.value}
-                label={tab.label}
-                icon={
-                  <Label
-                    variant={
-                      ((tab.value === 'all' || tab.value === filters.status.value) && 'filled') ||
-                      'soft'
-                    }
-                    color={
-                      (tab.value === '2' && 'success') ||
-                      (tab.value === '1' && 'warning') ||
-                      'default'
-                    }
-                  >
-                    {(tab.value === '2' && (filters.client?.length >= 3 ? 0 : countConfirmed)) ||
-                      (tab.value === '1' && (filters.client?.length >= 3 ? 0 : countProcess)) ||
-                      (filters.client?.length >= 3 ? searchResults?.length : count)}
-                  </Label>
-                }
-              />
-            ))}
-          </Tabs>
+            <Box sx={{ typography: 'body2' }}>
+              <Box component="span" sx={{ color: 'text.secondary' }}>
+                Найдено:{' '}
+              </Box>
+              <strong>{filters.client?.length >= 3 ? searchResults?.length : count}</strong>
+            </Box>
 
-          <UserTableToolbar
-            filters={filters}
-            onFilters={handleFilters}
-            //
-            contractTypeOptions={TYPES_OPTIONS}
-          />
-
-          {canReset && (
-            <UserTableFiltersResult
-              filters={filters}
-              onFilters={handleFilters}
-              //
-              onResetFilters={handleResetFilters}
-              //
-              results={filters.client?.length >= 3 ? searchResults?.length : contracts?.length}
-              sx={{ p: 2.5, pt: 0 }}
-            />
-          )}
+            {canReset && (
+              <Button
+                color="error"
+                onClick={handleResetFilters}
+                startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
+              >
+                Очистить
+              </Button>
+            )}
+          </Stack>
 
           <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>
             <TableSelectedAction

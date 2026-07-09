@@ -43,6 +43,18 @@ const getContractTypeConfig = (type) => {
   return { color: 'default', label: 'Не определен', icon: 'solar:question-circle-bold' };
 };
 
+// contract_payment_status приходит числом (1/2/3), приводим к строке для сравнения.
+const getPaymentStatusConfig = (status, text) => {
+  const s = String(status);
+  if (s === '3')
+    return { color: 'success', label: text || 'Оплачен полностью', icon: 'solar:check-circle-bold' };
+  if (s === '2')
+    return { color: 'warning', label: text || 'Оплачен частично', icon: 'solar:pie-chart-2-bold' };
+  if (s === '1')
+    return { color: 'error', label: text || 'Не оплачен', icon: 'solar:close-circle-bold' };
+  return { color: 'default', label: text || '—', icon: 'solar:question-circle-bold' };
+};
+
 // -------------------- Component --------------------
 
 export default function ContractTableRow({
@@ -62,6 +74,8 @@ export default function ContractTableRow({
     contract_id,
     contract_number,
     contract_type,
+    contract_payment_status,
+    contract_payment_status_text,
     created_at,
     is_active,
     is_terminated,
@@ -80,9 +94,11 @@ export default function ContractTableRow({
   const isDeleted = is_active === '0';
   const isTerminated = is_terminated === '1';
   const isInactive = isDeleted || isTerminated;
+  const isConfirmed = contract_status === '2';
 
   const statusConfig = getStatusConfig(isDeleted, isTerminated, contract_status);
   const typeConfig = getContractTypeConfig(contract_type);
+  const paymentConfig = getPaymentStatusConfig(contract_payment_status, contract_payment_status_text);
 
   const isBusiness = row?.client_type === '1';
 
@@ -197,25 +213,15 @@ export default function ContractTableRow({
           </Label>
         </TableCell>
 
-        {/* Файл */}
+        {/* Статус оплаты */}
         <TableCell>
-          <Tooltip title="Просмотр документа" placement="top" arrow>
-            <Box component="span">
-              <IconButton
-                onClick={onPreviewDocument}
-                disabled={isInactive}
-                sx={{
-                  color: 'primary.main',
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                  '&:hover': {
-                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.16),
-                  },
-                }}
-              >
-                <Iconify icon="material-symbols:contract-outline" />
-              </IconButton>
-            </Box>
-          </Tooltip>
+          <Label
+            variant="soft"
+            color={paymentConfig.color}
+            startIcon={<Iconify icon={paymentConfig.icon} />}
+          >
+            {paymentConfig.label}
+          </Label>
         </TableCell>
 
         {/* Комментарий */}
@@ -276,7 +282,7 @@ export default function ContractTableRow({
               <Box component="span">
                 <Switch
                   size="small"
-                  disabled={isDeleted || contract_status !== '2' || is_terminated === 1}
+                  disabled={isInactive || contract_status !== '2'}
                   defaultChecked={send_an_sms === '1' && !isInactive}
                   onChange={(event) => handleToggleSms(event.target.checked, contract_id)}
                 />
@@ -319,7 +325,11 @@ export default function ContractTableRow({
                 Расторгнуть
               </MenuItem>
 
-              <MenuItem component={RouterLink} href={paths.dashboard.contracts.edit(contract_id)}>
+              <MenuItem
+                component={RouterLink}
+                href={paths.dashboard.contracts.edit(contract_id)}
+                disabled={isConfirmed}
+              >
                 <Iconify icon="solar:pen-bold" />
                 Изменить
               </MenuItem>

@@ -11,18 +11,50 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import InputAdornment from '@mui/material/InputAdornment';
 
 import Iconify from 'src/components/iconify';
-import { usePopover } from 'src/components/custom-popover';
 
 // ----------------------------------------------------------------------
 
-export default function UserTableToolbar({
-  filters,
-  onFilters,
-  //
-  contractTypeOptions,
-}) {
-  const popover = usePopover();
+// Значение '' = «Все» = фильтр не отправляется на бэкенд.
+const TYPE_OPTIONS = [
+  { value: '', label: 'Все' },
+  { value: '0', label: 'Наличные' },
+  { value: '1', label: 'Рассрочка' },
+];
 
+const STATUS_OPTIONS = [
+  { value: '', label: 'Все' },
+  { value: '1', label: 'В процессе' },
+  { value: '2', label: 'Подписан' },
+];
+
+const PAYMENT_STATUS_OPTIONS = [
+  { value: '', label: 'Все' },
+  { value: '1', label: 'Не оплачен' },
+  { value: '2', label: 'Оплачен частично' },
+  { value: '3', label: 'Оплачен полностью' },
+];
+
+const BARTER_OPTIONS = [
+  { value: '', label: 'Все' },
+  { value: '1', label: 'Да' },
+  { value: '0', label: 'Нет' },
+];
+
+const TERMINATED_OPTIONS = [
+  { value: '', label: 'Все' },
+  { value: '1', label: 'Да' },
+  { value: '0', label: 'Нет' },
+];
+
+const CASH_TYPE_OPTIONS = [
+  { value: '', label: 'Все' },
+  { value: '0', label: 'USD' },
+  { value: '1', label: 'SUM' },
+];
+
+// ----------------------------------------------------------------------
+
+export default function UserTableToolbar({ filters, onFilters }) {
   const handleFilterClient = useCallback(
     (event) => {
       onFilters('client', event.target.value);
@@ -30,116 +62,118 @@ export default function UserTableToolbar({
     [onFilters]
   );
 
-  const handleContractType = useCallback(
-    (event, newValue, b) => {
-      onFilters('contractType', event.target.value);
+  const handleSelect = useCallback(
+    (name) => (event) => {
+      onFilters(name, event.target.value);
     },
     [onFilters]
   );
 
   return (
-    <>
-      <Stack
-        spacing={2}
-        alignItems={{ xs: 'flex-end', md: 'center' }}
-        direction={{
-          xs: 'column',
-          md: 'row',
+    <Stack
+      spacing={2}
+      direction={{ xs: 'column', md: 'row' }}
+      flexWrap="wrap"
+      useFlexGap
+      alignItems={{ xs: 'stretch', md: 'center' }}
+      sx={{ p: 2.5 }}
+    >
+      <FilterSelect
+        label="Тип"
+        value={filters.contractType}
+        onChange={handleSelect('contractType')}
+        options={TYPE_OPTIONS}
+      />
+
+      <FilterSelect
+        label="Статус договора"
+        value={filters.contractStatus}
+        onChange={handleSelect('contractStatus')}
+        options={STATUS_OPTIONS}
+      />
+
+      <FilterSelect
+        label="Статус оплаты"
+        value={filters.contractPaymentStatus}
+        onChange={handleSelect('contractPaymentStatus')}
+        options={PAYMENT_STATUS_OPTIONS}
+      />
+
+      <FilterSelect
+        label="Бартер"
+        value={filters.isBarter}
+        onChange={handleSelect('isBarter')}
+        options={BARTER_OPTIONS}
+      />
+
+      <FilterSelect
+        label="Расторгнутые"
+        value={filters.isTerminated}
+        onChange={handleSelect('isTerminated')}
+        options={TERMINATED_OPTIONS}
+      />
+
+      <FilterSelect
+        label="Валюта"
+        value={filters.contractCashType}
+        onChange={handleSelect('contractCashType')}
+        options={CASH_TYPE_OPTIONS}
+      />
+
+      <TextField
+        value={filters.client}
+        onChange={handleFilterClient}
+        placeholder="Поиск по клиенту..."
+        sx={{ flexGrow: 1, width: { xs: 1, md: 'auto' }, minWidth: { md: 220 } }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+            </InputAdornment>
+          ),
         }}
-        sx={{
-          p: 2.5,
-          pr: { xs: 2.5, md: 1 },
-        }}
-      >
-        <FormControl
-          sx={{
-            flexShrink: 0,
-            width: { xs: 1, md: 200 },
-          }}
-        >
-          <InputLabel>Типы оплаты</InputLabel>
-
-          <Select
-            value={filters.contractType.value}
-            onChange={handleContractType}
-            input={<OutlinedInput label="Типы оплаты" />}
-            renderValue={(selected) =>
-              contractTypeOptions.find((option) => option.value === selected)?.label
-            }
-            MenuProps={{
-              PaperProps: {
-                sx: { maxHeight: 240 },
-              },
-            }}
-          >
-            {contractTypeOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Stack direction="row" alignItems="center" spacing={2} flexGrow={1} sx={{ width: 1 }}>
-          <TextField
-            fullWidth
-            value={filters.client}
-            onChange={handleFilterClient}
-            placeholder="Поиск..."
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          {/* <IconButton onClick={popover.onOpen}>
-            <Iconify icon="eva:more-vertical-fill" />
-          </IconButton> */}
-        </Stack>
-      </Stack>
-
-      {/* <CustomPopover
-        open={popover.open}
-        onClose={popover.onClose}
-        arrow="right-top"
-        sx={{ width: 140 }}
-      >
-        <MenuItem
-          onClick={() => {
-            popover.onClose();
-          }}
-        >
-          <Iconify icon="solar:printer-minimalistic-bold" />
-          Print
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            popover.onClose();
-          }}
-        >
-          <Iconify icon="solar:import-bold" />
-          Import
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            popover.onClose();
-          }}
-        >
-          <Iconify icon="solar:export-bold" />
-          Export
-        </MenuItem>
-      </CustomPopover> */}
-    </>
+      />
+    </Stack>
   );
 }
 
 UserTableToolbar.propTypes = {
   filters: PropTypes.object,
   onFilters: PropTypes.func,
-  contractTypeOptions: PropTypes.array,
+};
+
+// ----------------------------------------------------------------------
+
+function FilterSelect({ label, value, onChange, options }) {
+  return (
+    <FormControl sx={{ flexShrink: 0, width: { xs: 1, md: 180 } }}>
+      <InputLabel shrink>{label}</InputLabel>
+
+      <Select
+        displayEmpty
+        value={value}
+        onChange={onChange}
+        input={<OutlinedInput notched label={label} />}
+        renderValue={(selected) => options.find((option) => option.value === selected)?.label}
+        MenuProps={{
+          PaperProps: {
+            sx: { maxHeight: 240 },
+          },
+        }}
+      >
+        {options.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
+}
+
+FilterSelect.propTypes = {
+  label: PropTypes.string,
+  value: PropTypes.string,
+  onChange: PropTypes.func,
+  options: PropTypes.array,
 };

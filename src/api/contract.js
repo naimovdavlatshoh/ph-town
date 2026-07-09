@@ -6,7 +6,17 @@ import axios, { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 
-export function useGetContracts(page = 1, contractStatus = '', contractType = '') {
+export function useGetContracts(params = {}) {
+  const {
+    page = 1,
+    contractStatus = '',
+    contractType = '',
+    contractPaymentStatus = '',
+    isBarter = '',
+    isTerminated = '',
+    contractCashType = '',
+  } = params;
+
   const URL = endpoints.contract.list;
   const CREATE_URL = endpoints.contract.create;
   const CREATE_WITH_PLAN_URL = endpoints.contract.createWithPlan;
@@ -21,12 +31,30 @@ export function useGetContracts(page = 1, contractStatus = '', contractType = ''
     page,
   };
 
+  // Пустые (не выбранные) фильтры не добавляем. Значения '0'/'1' — непустые строки,
+  // поэтому проверки `if (value)` достаточно, чтобы отправить и «0», и «1».
   if (contractStatus) {
     queryObject.contract_status = contractStatus;
   }
 
   if (contractType) {
     queryObject.contract_type = contractType;
+  }
+
+  if (contractPaymentStatus) {
+    queryObject.contract_payment_status = contractPaymentStatus;
+  }
+
+  if (isBarter) {
+    queryObject.is_barter = isBarter;
+  }
+
+  if (isTerminated) {
+    queryObject.is_terminated = isTerminated;
+  }
+
+  if (contractCashType) {
+    queryObject.contract_cash_type = contractCashType;
   }
 
   const query = queryString.stringify(queryObject);
