@@ -7,7 +7,7 @@ import { ChartCard, ChartTooltip, useChartBase } from '../components';
 
 // ----------------------------------------------------------------------
 
-export default function BlocksChart({ data, loading }) {
+export default function BlocksChart({ data, loading, explanation }) {
   const theme = useTheme();
   const { axisTick, gridStroke, cursorFill } = useChartBase();
 
@@ -19,6 +19,7 @@ export default function BlocksChart({ data, loading }) {
       color="primary"
       loading={loading}
       isEmpty={!data.length}
+      explanation={explanation}
     >
       <ResponsiveContainer width="100%" height={400}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0 }}>
@@ -37,5 +38,6 @@ export default function BlocksChart({ data, loading }) {
 
 BlocksChart.propTypes = {
   data: PropTypes.array,
+  explanation: PropTypes.string,
   loading: PropTypes.bool,
 };

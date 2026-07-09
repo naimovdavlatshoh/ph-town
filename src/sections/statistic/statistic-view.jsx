@@ -16,10 +16,13 @@ import { StatCard } from './components';
 import SalesChart from './charts/sales-chart';
 import BlocksChart from './charts/blocks-chart';
 import PaymentsChart from './charts/payments-chart';
+import DebtorsWidget from './charts/debtors-widget';
 import ContractsChart from './charts/contracts-chart';
 import BlocksAreaChart from './charts/blocks-area-chart';
 import InstallmentsChart from './charts/installments-chart';
 import { fmtFull, fmtCompact, getDataWithToken } from './utils';
+import CollectionRateChart from './charts/collection-rate-chart';
+import RemainingValueChart from './charts/remaining-value-chart';
 
 // ----------------------------------------------------------------------
 
@@ -30,6 +33,10 @@ export default function StatisticView() {
   const [blockData, setBlockData] = useState([]);
   const [areaData, setAreaData] = useState([]);
   const [averagePrice, setAveragePrice] = useState([]);
+  const [debtors, setDebtors] = useState(null);
+  const [collection, setCollection] = useState(null);
+  const [remainingValue, setRemainingValue] = useState([]);
+  const [explanations, setExplanations] = useState({});
   const [loading, setLoading] = useState(true);
 
   const currentYear = new Date().getFullYear();
@@ -52,11 +59,26 @@ export default function StatisticView() {
       getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/averageprice?year=${year}`),
       getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/byblock`),
       getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/byblockarea`),
-    ]).then(([contractsRes, installmentsRes, kassaRes, avgRes, blockRes, areaRes]) => {
+      getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/debtors`),
+      getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/collectionrate?year=${year}`),
+      getDataWithToken(`${CUSTOM_BASE_URL}/api/v1/dashboard/remainingvalue`),
+    ]).then(([contractsRes, installmentsRes, kassaRes, avgRes, blockRes, areaRes, debtorsRes, collectionRes, remainingRes]) => {
       if (!active) return;
 
+      setExplanations({
+        contracts: contractsRes?.explanation,
+        installments: installmentsRes?.explanation,
+        payments: kassaRes?.explanation,
+        averagePrice: avgRes?.explanation,
+        blocks: blockRes?.explanation,
+        area: areaRes?.explanation,
+        debtors: debtorsRes?.explanation,
+        collection: collectionRes?.explanation,
+        remaining: remainingRes?.explanation,
+      });
+
       setContracts(
-        (contractsRes || []).map((item) => ({
+        (contractsRes?.data || []).map((item) => ({
           ...item,
           signed_contracts: Number(item.signed_contracts),
           terminated_contracts: Number(item.terminated_contracts),
@@ -64,7 +86,7 @@ export default function StatisticView() {
       );
 
       setInstallments(
-        (installmentsRes || []).map((item) => ({
+        (installmentsRes?.data || []).map((item) => ({
           ...item,
           total_paid: Number(item.total_paid),
           total_expected: Number(item.total_expected),
@@ -72,7 +94,7 @@ export default function StatisticView() {
       );
 
       setPayments(
-        (kassaRes || []).map((month) => {
+        (kassaRes?.data || []).map((month) => {
           const map = {};
           month.payments.forEach((p) => {
             map[p.method_name] = Number(p.total_amount);
@@ -88,7 +110,7 @@ export default function StatisticView() {
       );
 
       setAveragePrice(
-        (avgRes || []).map((item) => ({
+        (avgRes?.data || []).map((item) => ({
           ...item,
           sales_count: Number(item.sales_count),
           average_price: Number(item.average_price),
@@ -96,7 +118,7 @@ export default function StatisticView() {
       );
 
       setBlockData(
-        (blockRes || []).map((item) => ({
+        (blockRes?.data || []).map((item) => ({
           block_name: item.block_name,
           total_count: Number(item.total_count),
           sold_count: Number(item.sold_count),
@@ -105,11 +127,54 @@ export default function StatisticView() {
       );
 
       setAreaData(
-        (areaRes || []).map((item) => ({
+        (areaRes?.data || []).map((item) => ({
           block_name: item.block_name,
           total_area: Number(item.total_area),
           area_sold_count: Number(item.area_sold_count),
           area_unsold_count: Number(item.area_unsold_count),
+        }))
+      );
+
+      setDebtors(
+        debtorsRes?.data
+          ? {
+              total_overdue_amount: Number(debtorsRes.data.total_overdue_amount),
+              overdue_installments_count: Number(debtorsRes.data.overdue_installments_count),
+              debtors_count: Number(debtorsRes.data.debtors_count),
+              buckets: (debtorsRes.data.buckets || []).map((b) => ({
+                bucket: b.bucket,
+                label: b.label,
+                overdue_amount: Number(b.overdue_amount),
+                overdue_installments_count: Number(b.overdue_installments_count),
+                debtors_count: Number(b.debtors_count),
+              })),
+            }
+          : null
+      );
+
+      setCollection(
+        collectionRes?.data
+          ? {
+              year: collectionRes.data.year,
+              total_expected: Number(collectionRes.data.total_expected),
+              total_paid: Number(collectionRes.data.total_paid),
+              collection_rate: Number(collectionRes.data.collection_rate),
+              months: (collectionRes.data.months || []).map((m) => ({
+                month_name: m.month_name,
+                total_expected: Number(m.total_expected),
+                total_paid: Number(m.total_paid),
+                cumulative_rate: Number(m.cumulative_rate),
+              })),
+            }
+          : null
+      );
+
+      setRemainingValue(
+        (remainingRes?.data || []).map((item) => ({
+          block_name: item.block_name,
+          remaining_count: Number(item.remaining_count),
+          remaining_area: Number(item.remaining_area),
+          remaining_value: Number(item.remaining_value),
         }))
       );
 
@@ -212,22 +277,31 @@ export default function StatisticView() {
       {/* Charts */}
       <Grid container spacing={3} sx={{ mt: 0 }}>
         <Grid item xs={12} md={6}>
-          <ContractsChart data={contracts} loading={loading} />
+          <ContractsChart data={contracts} loading={loading} explanation={explanations.contracts} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <InstallmentsChart data={installments} loading={loading} />
+          <InstallmentsChart data={installments} loading={loading} explanation={explanations.installments} />
         </Grid>
         <Grid item xs={12}>
-          <PaymentsChart data={payments} loading={loading} />
+          <PaymentsChart data={payments} loading={loading} explanation={explanations.payments} />
         </Grid>
         <Grid item xs={12}>
-          <SalesChart data={averagePrice} loading={loading} />
+          <SalesChart data={averagePrice} loading={loading} explanation={explanations.averagePrice} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <BlocksChart data={blockData} loading={loading} />
+          <BlocksChart data={blockData} loading={loading} explanation={explanations.blocks} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <BlocksAreaChart data={areaData} loading={loading} />
+          <BlocksAreaChart data={areaData} loading={loading} explanation={explanations.area} />
+        </Grid>
+        <Grid item xs={12}>
+          <CollectionRateChart data={collection} loading={loading} explanation={explanations.collection} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <DebtorsWidget data={debtors} loading={loading} explanation={explanations.debtors} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <RemainingValueChart data={remainingValue} loading={loading} explanation={explanations.remaining} />
         </Grid>
       </Grid>
     </Container>

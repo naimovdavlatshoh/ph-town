@@ -7,7 +7,7 @@ import { ChartCard, ChartTooltip, useChartBase } from '../components';
 
 // ----------------------------------------------------------------------
 
-export default function ContractsChart({ data, loading }) {
+export default function ContractsChart({ data, loading, explanation }) {
   const theme = useTheme();
   const { axisTick, gridStroke, cursorFill, monthTick } = useChartBase();
 
@@ -19,6 +19,7 @@ export default function ContractsChart({ data, loading }) {
       color="primary"
       loading={loading}
       isEmpty={!data.length}
+      explanation={explanation}
     >
       <ResponsiveContainer width="100%" height={360}>
         <ComposedChart data={data} margin={{ top: 8, right: 8, left: -16 }}>
@@ -60,5 +61,6 @@ export default function ContractsChart({ data, loading }) {
 
 ContractsChart.propTypes = {
   data: PropTypes.array,
+  explanation: PropTypes.string,
   loading: PropTypes.bool,
 };

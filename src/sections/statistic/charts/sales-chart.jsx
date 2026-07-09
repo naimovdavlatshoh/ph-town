@@ -8,7 +8,7 @@ import { ChartCard, ChartTooltip, useChartBase } from '../components';
 
 // ----------------------------------------------------------------------
 
-export default function SalesChart({ data, loading }) {
+export default function SalesChart({ data, loading, explanation }) {
   const theme = useTheme();
   const { axisTick, gridStroke, cursorFill, monthTick } = useChartBase();
 
@@ -20,6 +20,7 @@ export default function SalesChart({ data, loading }) {
       color="error"
       loading={loading}
       isEmpty={!data.length}
+      explanation={explanation}
     >
       <ResponsiveContainer width="100%" height={400}>
         <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0 }}>
@@ -64,5 +65,6 @@ export default function SalesChart({ data, loading }) {
 
 SalesChart.propTypes = {
   data: PropTypes.array,
+  explanation: PropTypes.string,
   loading: PropTypes.bool,
 };

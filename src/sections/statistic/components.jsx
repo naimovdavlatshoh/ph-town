@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -89,7 +90,7 @@ StatCard.propTypes = {
 // ----------------------------------------------------------------------
 // Chart wrapper: header + loading / empty states
 
-export function ChartCard({ title, subtitle, icon, color, loading, isEmpty, children }) {
+export function ChartCard({ title, subtitle, icon, color, loading, isEmpty, explanation, children }) {
   const theme = useTheme();
   const c = theme.palette[color] || theme.palette.primary;
 
@@ -137,6 +138,24 @@ export function ChartCard({ title, subtitle, icon, color, loading, isEmpty, chil
             </Typography>
           )}
         </Box>
+
+        {explanation && (
+          <Tooltip title={explanation} arrow placement="top">
+            <Box
+              component="span"
+              sx={{
+                ml: 'auto',
+                display: 'inline-flex',
+                cursor: 'help',
+                color: 'text.disabled',
+                transition: theme.transitions.create('color'),
+                '&:hover': { color: c.main },
+              }}
+            >
+              <Iconify icon="solar:info-circle-bold-duotone" width={22} />
+            </Box>
+          </Tooltip>
+        )}
       </Stack>
 
       {body}
@@ -147,6 +166,7 @@ export function ChartCard({ title, subtitle, icon, color, loading, isEmpty, chil
 ChartCard.propTypes = {
   children: PropTypes.node,
   color: PropTypes.string,
+  explanation: PropTypes.string,
   icon: PropTypes.string,
   isEmpty: PropTypes.bool,
   loading: PropTypes.bool,

@@ -15,7 +15,7 @@ const areaGradient = (id, color) => (
   </linearGradient>
 );
 
-export default function PaymentsChart({ data, loading }) {
+export default function PaymentsChart({ data, loading, explanation }) {
   const theme = useTheme();
   const { axisTick, gridStroke, cursorFill, monthTick } = useChartBase();
 
@@ -34,6 +34,7 @@ export default function PaymentsChart({ data, loading }) {
       color="secondary"
       loading={loading}
       isEmpty={!data.length}
+      explanation={explanation}
     >
       <ResponsiveContainer width="100%" height={400}>
         <AreaChart data={data} margin={{ top: 8, right: 8, left: 0 }}>
@@ -64,5 +65,6 @@ export default function PaymentsChart({ data, loading }) {
 
 PaymentsChart.propTypes = {
   data: PropTypes.array,
+  explanation: PropTypes.string,
   loading: PropTypes.bool,
 };
