@@ -57,18 +57,6 @@ const getIsBarterValue = (contract) => {
 };
 
 // ----------------------------------------------------------------------
-// Единая формула суммы (синхронно с бэком):
-// total_price = price_square_meter($) * apartment_area * contract_exchange_rate
-// Дробь отрезается (Math.trunc == bcadd(...,0) на бэке).
-// ----------------------------------------------------------------------
-const calcTotalPrice = (priceSquareMeter, apartmentArea, exchangeRate) => {
-  const price = parseFloat(priceSquareMeter) || 0;
-  const area = parseFloat(apartmentArea) || 0;
-  const rate = parseFloat(String(exchangeRate ?? '').replace(/,/g, '')) || 0;
-  return Math.trunc(price * area * rate);
-};
-
-// ----------------------------------------------------------------------
 
 export default function ContractNewEditForm({ currentContract, apartmentId }) {
   const { currency } = useGetCurrency();
@@ -334,19 +322,6 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [methods.watch('paymentType')]);
 
-  // ВАЖНО: пересчёт totalAmount по формуле при смене квартиры или курса.
-  // Так фронтовый totalAmount всегда совпадает с тем, что посчитает бэк,
-  // а значит остаток и график платежей согласованы (строгая проверка пройдёт).
-  useEffect(() => {
-    const apt = methods.watch('apartment');
-    const rate = methods.watch('contract_exchange_rate');
-    if (apt) {
-      const total = calcTotalPrice(apt.price_square_meter, apt.apartment_area, rate);
-      methods.setValue('totalAmount', total);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [methods.watch('apartment'), methods.watch('contract_exchange_rate')]);
-
   useEffect(() => {
     methods.setValue('initialPayment', currentContract ? currentContract?.initial_payment : '');
     methods.setValue('months', currentContract ? currentContract?.paymentday?.length : '');
@@ -388,12 +363,9 @@ export default function ContractNewEditForm({ currentContract, apartmentId }) {
       apartment_id: data?.apartment?.apartment_id,
       apartment_area: data?.apartment?.apartment_area,
       price_square_meter: data?.apartment?.price_square_meter,
-      // total_price считается по формуле (синхронно с бэком), дробь отрезается
-      total_price: calcTotalPrice(
-        data?.apartment?.price_square_meter,
-        data?.apartment?.apartment_area,
-        rate
-      ),
+      // Сумма квартиры в сумах приходит с бэка (uzs_full_price). Курс доллара из формы —
+      // справочное поле (курс на дату старого договора) и на сумму не влияет.
+      total_price: data?.totalAmount,
       initial_payment: parseFloat(data?.initialPayment?.replace(/,/g, '')),
       comments: data?.comments,
       is_barter: data.is_barter === '1' || data.is_barter === '2' ? 1 : 0,
