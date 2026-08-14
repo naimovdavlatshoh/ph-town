@@ -1,139 +1,237 @@
 import PropTypes from 'prop-types';
+import { useRef, useState, useEffect } from 'react';
 
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Divider from '@mui/material/Divider';
-import { useTheme } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-
-import { useResponsive } from 'src/hooks/use-responsive';
 
 import { fNumber } from 'src/utils/format-number';
 
-import Chart, { useChart } from 'src/components/chart';
+import Iconify from 'src/components/iconify';
+
+// ----------------------------------------------------------------------
+
+// Конфигурация метрик по индексу: цвет из палитры + иконка.
+const METRICS = [
+  { colorKey: 'info', icon: 'solar:wallet-money-bold-duotone' },
+  { colorKey: 'warning', icon: 'solar:hand-money-bold-duotone' },
+  { colorKey: 'success', icon: 'solar:check-circle-bold-duotone' },
+  { colorKey: 'error', icon: 'solar:pie-chart-2-bold-duotone' },
+];
+
+// ----------------------------------------------------------------------
+
+// Плавный счётчик чисел (count-up) на requestAnimationFrame.
+function useCountUp(target, duration = 1400) {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef();
+
+  useEffect(() => {
+    const end = Number(target) || 0;
+    const start = performance.now();
+
+    const tick = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      // easeOutCubic
+      const eased = 1 - (1 - progress) ** 3;
+      setValue(end * eased);
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [target, duration]);
+
+  return value;
+}
+
+// ----------------------------------------------------------------------
+
+function ProgressRing({ percent, mainColor, lightColor, icon, delay }) {
+  const size = 96;
+  const stroke = 8;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  const [mounted, setMounted] = useState(false);
+  const animatedPercent = useCountUp(mounted ? percent : 0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+
+  const clamped = Math.min(Math.max(mounted ? percent : 0, 0), 100);
+  const offset = circumference * (1 - clamped / 100);
+  const gradientId = `ring-gradient-${mainColor.replace(/[^a-z0-9]/gi, '')}`;
+
+  return (
+    <Box sx={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <Box
+        component="svg"
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        sx={{ transform: 'rotate(-90deg)' }}
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={lightColor} />
+            <stop offset="100%" stopColor={mainColor} />
+          </linearGradient>
+        </defs>
+
+        {/* Дорожка */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={alpha(mainColor, 0.16)}
+          strokeWidth={stroke}
+        />
+
+        {/* Прогресс */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.22, 1, 0.36, 1)' }}
+        />
+      </Box>
+
+      {/* Центр: иконка + процент */}
+      <Stack
+        alignItems="center"
+        justifyContent="center"
+        sx={{ position: 'absolute', inset: 0 }}
+      >
+        <Iconify icon={icon} width={22} sx={{ color: mainColor, mb: 0.25 }} />
+        <Typography variant="caption" sx={{ fontWeight: 700, color: mainColor, lineHeight: 1 }}>
+          {Math.round(animatedPercent)}%
+        </Typography>
+      </Stack>
+    </Box>
+  );
+}
+
+ProgressRing.propTypes = {
+  percent: PropTypes.number,
+  mainColor: PropTypes.string,
+  lightColor: PropTypes.string,
+  icon: PropTypes.string,
+  delay: PropTypes.number,
+};
+
+// ----------------------------------------------------------------------
+
+function MetricTile({ item, config, delay }) {
+  const theme = useTheme();
+  const palette = theme.palette[config.colorKey];
+  const animatedTotal = useCountUp(Number(item.total) || 0);
+
+  return (
+    <Box
+      sx={{
+        p: 3,
+        height: 1,
+        borderRadius: 2,
+        position: 'relative',
+        overflow: 'hidden',
+        transition: theme.transitions.create(['transform', 'box-shadow'], {
+          duration: theme.transitions.duration.shorter,
+        }),
+        background: `linear-gradient(135deg, ${alpha(palette.main, 0.08)} 0%, ${alpha(
+          palette.main,
+          0.02
+        )} 100%)`,
+        border: `1px solid ${alpha(palette.main, 0.12)}`,
+        '&:hover': {
+          transform: 'translateY(-6px)',
+          boxShadow: `0 16px 32px -12px ${alpha(palette.main, 0.4)}`,
+        },
+      }}
+    >
+      {/* Декоративное свечение в углу */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: -30,
+          right: -30,
+          width: 100,
+          height: 100,
+          borderRadius: '50%',
+          background: alpha(palette.main, 0.1),
+          filter: 'blur(8px)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <Stack direction="row" alignItems="center" spacing={2.5} sx={{ position: 'relative' }}>
+        <ProgressRing
+          percent={Number(item.percent) || 0}
+          mainColor={palette.main}
+          lightColor={palette.light}
+          icon={config.icon}
+          delay={delay}
+        />
+
+        <Stack spacing={0.5} sx={{ minWidth: 0 }}>
+          <Typography variant="overline" sx={{ color: 'text.secondary', lineHeight: 1.2 }}>
+            {item.label}
+          </Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+            {fNumber(Math.round(animatedTotal))}
+          </Typography>
+        </Stack>
+      </Stack>
+    </Box>
+  );
+}
+
+MetricTile.propTypes = {
+  item: PropTypes.object,
+  config: PropTypes.object,
+  delay: PropTypes.number,
+};
 
 // ----------------------------------------------------------------------
 
 export default function ContractWidgets({ initialPayment, chart, ...other }) {
-  const theme = useTheme();
-
-  const smUp = useResponsive('up', 'sm');
-
-  const {
-    colors = [
-      [theme.palette.primary.light, theme.palette.primary.main],
-      [theme.palette.warning.light, theme.palette.warning.main],
-    ],
-    series,
-    options,
-  } = chart;
-
-  const chartOptionsCheckIn = useChart({
-    fill: {
-      type: 'gradient',
-      gradient: {
-        colorStops: [
-          { offset: 0, color: colors[0][0], opacity: 1 },
-          { offset: 100, color: colors[0][1], opacity: 1 },
-        ],
-      },
-    },
-    chart: {
-      sparkline: {
-        enabled: true,
-      },
-    },
-    grid: {
-      padding: {
-        top: -9,
-        bottom: -9,
-      },
-    },
-    legend: {
-      show: false,
-    },
-    plotOptions: {
-      radialBar: {
-        hollow: { size: '64%' },
-        track: { margin: 0 },
-        dataLabels: {
-          name: { show: false },
-          value: {
-            offsetY: 6,
-            fontSize: theme.typography.subtitle2.fontSize,
-          },
-        },
-      },
-    },
-    ...options,
-  });
-
-  const chartOptionsCheckout = {
-    ...chartOptionsCheckIn,
-    fill: {
-      type: 'gradient',
-      gradient: {
-        colorStops: [
-          { offset: 0, color: colors[1][0], opacity: 1 },
-          { offset: 100, color: colors[1][1], opacity: 1 },
-        ],
-      },
-    },
-  };
+  const { series } = chart;
 
   return (
-    <Card {...other}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        divider={
-          <Divider
-            orientation={smUp ? 'vertical' : 'horizontal'}
-            flexItem
-            sx={{ borderStyle: 'dashed' }}
-          />
-        }
+    <Card {...other} sx={{ p: { xs: 2, md: 3 }, ...other.sx }}>
+      <Box
+        sx={{
+          gap: 2,
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(1, 1fr)',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(4, 1fr)',
+          },
+        }}
       >
         {series.map((item, index) => (
-          <Stack
+          <MetricTile
             key={item.label}
-            spacing={1}
-            direction="row"
-            alignItems="center"
-            justifyContent={{ sm: 'center' }}
-            sx={{
-              py: 2,
-              width: 1,
-              px: { xs: 3, sm: 0 },
-            }}
-          >
-            <Chart
-              dir="ltr"
-              type="radialBar"
-              series={[fNumber(item.percent)]}
-              options={
-                // eslint-disable-next-line no-nested-ternary
-                index === 1
-                  ? initialPayment
-                    ? chartOptionsCheckIn
-                    : chartOptionsCheckout
-                  : chartOptionsCheckIn
-              }
-              width={95}
-              height={95}
-            />
-
-            <div>
-              <Typography variant="h6" sx={{ mb: 0.5 }}>
-                {item.total ? fNumber(item.total) : 0}
-              </Typography>
-
-              <Typography variant="body2" sx={{ opacity: 0.72 }}>
-                {item.label}
-              </Typography>
-            </div>
-          </Stack>
+            item={item}
+            config={METRICS[index] || METRICS[0]}
+            delay={index * 150}
+          />
         ))}
-      </Stack>
+      </Box>
     </Card>
   );
 }
@@ -141,4 +239,5 @@ export default function ContractWidgets({ initialPayment, chart, ...other }) {
 ContractWidgets.propTypes = {
   chart: PropTypes.object,
   initialPayment: PropTypes.bool,
+  sx: PropTypes.object,
 };

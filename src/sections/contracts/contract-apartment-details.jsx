@@ -376,6 +376,7 @@ export default function ContractApartmentDetails({ invoice, contract, refresh })
                 onClick={paymentDialog.onTrue}
                 variant="contained"
                 color="success"
+                disabled={contract?.is_terminated === '1' || contract?.is_active === '0'}
                 startIcon={<Iconify icon="solar:wad-of-money-bold" />}
               >
                 Оплатить

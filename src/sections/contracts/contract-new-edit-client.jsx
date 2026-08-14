@@ -229,9 +229,8 @@ export default function ContractNewEditClient({ mode = '' }) {
         title="Помещения"
         open={to.value}
         onClose={to.onFalse}
-        selected={(selectedId) => apartment?.id === selectedId}
+        selected={(selectedId) => apartment?.apartment_id === selectedId}
         onSelect={(aprt) => setValue('apartment', aprt)}
-        list={_addressBooks}
         action={
           <Button
             component={RouterLink}

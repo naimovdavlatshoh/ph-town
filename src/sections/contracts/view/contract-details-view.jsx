@@ -24,26 +24,28 @@ export default function ContractDetailsView({ id }) {
     (invoice) => invoice.id === 'e99f09a7-dd88-49d5-b1c8-1daf80c2d7b1'
   )[0];
 
+  // Состояние контракта в том же порядке приоритетов, что и в списке (getStatusConfig):
+  // Удален -> Расторгнут -> В процессе -> Подтвержден.
+  const getStatusLabel = () => {
+    if (contract?.is_active === '0') return { color: 'default', label: 'Удален' };
+    if (contract?.is_terminated === '1') return { color: 'error', label: 'Расторгнут' };
+    if (contract?.contract_status === '1') return { color: 'warning', label: 'В процессе' };
+    if (contract?.contract_status === '2') return { color: 'success', label: 'Подтвержден' };
+    return { color: 'default', label: '' };
+  };
+
   return (
-    <Container maxWidth={settings.themeStretch ? false : 'lg'}>
+    <Container maxWidth={settings.themeStretch ? false : 'xl'}>
       <CustomBreadcrumbs
         heading={contract?.contract_number}
-        status={() => (
-          <Label
-            variant="soft"
-            color={
-              (contract?.contract_status === '2' && 'success') ||
-              (contract?.contract_status === '1' && 'warning') ||
-              (contract?.contract_status === '0' && 'error') ||
-              'default'
-            }
-          >
-            {(contract?.contract_status === '2' && 'Подписан') ||
-              (contract?.contract_status === '1' && 'В процессе') ||
-              (contract?.contract_status === '0' && 'Удален') ||
-              ''}{' '}
-          </Label>
-        )}
+        status={() => {
+          const status = getStatusLabel();
+          return (
+            <Label variant="soft" color={status.color}>
+              {status.label}
+            </Label>
+          );
+        }}
         backLink={paths.dashboard.contracts.root}
         links={[
           {

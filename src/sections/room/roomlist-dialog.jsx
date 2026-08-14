@@ -1,32 +1,35 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { v4 as uuidv4 } from 'uuid';
-import { useState, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Dialog from '@mui/material/Dialog';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import InputAdornment from '@mui/material/InputAdornment';
 import { TreeView } from '@mui/x-tree-view/TreeView';
-import { styled, useTheme } from '@mui/material/styles';
+import { alpha, styled, useTheme } from '@mui/material/styles';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { TreeItem, treeItemClasses } from '@mui/x-tree-view/TreeItem';
 
-import getStatusColor from 'src/utils/apartment-status';
+import getStatusColor, { getStatusTitle } from 'src/utils/apartment-status';
 
 import { useGetObjectsTreeList } from 'src/api/object';
 
 import Iconify from 'src/components/iconify';
 import SearchNotFound from 'src/components/search-not-found';
 
+// ----------------------------------------------------------------------
+
 const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
   color: theme.palette.text.secondary,
   [`& .${treeItemClasses.content}`]: {
     color: theme.palette.text.secondary,
-    borderTopRightRadius: theme.spacing(2),
-    borderBottomRightRadius: theme.spacing(2),
+    borderRadius: theme.shape.borderRadius,
+    marginBottom: 2,
     paddingRight: theme.spacing(1),
     fontWeight: theme.typography.fontWeightMedium,
     '&.Mui-expanded': {
@@ -45,200 +48,142 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
     },
   },
   [`& .${treeItemClasses.group}`]: {
-    marginLeft: 0,
-    [`& .${treeItemClasses.content}`]: {
-      paddingLeft: theme.spacing(2),
-    },
+    marginLeft: theme.spacing(2),
+    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.16)}`,
   },
 }));
 
+// Ветка дерева (объект/блок/подъезд/этаж) — заголовок с иконкой.
 const StyledTreeItem = React.forwardRef((props, ref) => {
-  const theme = useTheme();
-  const {
-    // eslint-disable-next-line react/prop-types
-    bgColor,
-    // eslint-disable-next-line react/prop-types
-    color,
-    // eslint-disable-next-line react/prop-types
-    labelIcon: LabelIcon,
-    // eslint-disable-next-line react/prop-types
-    labelInfo,
-    // eslint-disable-next-line react/prop-types
-    labelText,
-    // eslint-disable-next-line react/prop-types
-    colorForDarkMode,
-    // eslint-disable-next-line react/prop-types
-    bgColorForDarkMode,
-
-    ...other
-  } = props;
-
-  const styleProps = {
-    '--tree-view-color': theme.palette.mode !== 'dark' ? color : colorForDarkMode,
-    '--tree-view-bg-color': theme.palette.mode !== 'dark' ? bgColor : bgColorForDarkMode,
-  };
+  // eslint-disable-next-line react/prop-types
+  const { labelIcon: LabelIcon, labelText, labelInfo, ...other } = props;
 
   return (
     <StyledTreeItemRoot
       label={
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            p: 0.5,
-            pr: 0,
-          }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', py: 0.75, pr: 0 }}>
           <Box component={LabelIcon} color="inherit" sx={{ mr: 1 }} />
           <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>
             {labelText}
           </Typography>
-          <Typography variant="caption" color="inherit">
-            {labelInfo}
-          </Typography>
+          {labelInfo != null && (
+            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+              {labelInfo}
+            </Typography>
+          )}
         </Box>
       }
-      style={styleProps}
       {...other}
       ref={ref}
     />
   );
 });
+
 // ----------------------------------------------------------------------
 
-// const data = {
-//   project_id: '13',
-//   project_name: 'Dreamland Parkent 2',
-//   is_active: '1',
-//   created_at: '2024-01-24 12:27:11',
-//   updated_at: '2024-01-25 12:28:42',
-//   block: [
-//     {
-//       block_id: '39',
-//       project_id: '13',
-//       block_name: 'A',
-//       max_entrances: '3',
-//       max_floors: '5',
-//       is_basement: '0',
-//       block_image_path: null,
-//       block_map_area: null,
-//       is_active: '1',
-//       created_at: '2024-01-24 12:27:27',
-//       updated_at: null,
-//       entrance: [
-//         {
-//           entrance_id: '14',
-//           entrance_name: '1 - \u043f\u043e\u0434\u044a\u0435\u0437\u0434',
-//           floor: [
-//             {
-//               floor_id: '21',
-//               floor_number: '-1',
-//               floor_type: '0',
-//               apartments_number: '1',
-//               apartments: [
-//                 {
-//                   apartment_id: '32',
-//                   apartment_name: '\u0441\u043a\u043b\u0430\u0434',
-//                   apartment_area: '50.00',
-//                   rooms_number: '1',
-//                   stock_status: '1',
-//                   price_square_meter: '313123',
-//                   totalprice: '15656150',
-//                   layout_id: '26',
-//                   layout_name: '1 \u0445\u043e\u043d\u0430 53',
-//                   layout_type: '1',
-//                   layout_image: 'https://api.argon.uz/layout_files/webp/nbA6WO54Oe.webp',
-//                   created_at: '2024-01-24 12:29:03',
-//                 },
-//               ],
-//             },
-//             {
-//               floor_id: '22',
-//               floor_number: '1',
-//               floor_type: '1',
-//               apartments_number: '3',
-//               apartments: [
-//                 {
-//                   apartment_id: '33',
-//                   apartment_name: '1',
-//                   apartment_area: '100.50',
-//                   rooms_number: '3',
-//                   stock_status: '1',
-//                   price_square_meter: '12312',
-//                   totalprice: '1237356',
-//                   layout_id: '26',
-//                   layout_name: '1 \u0445\u043e\u043d\u0430 53',
-//                   layout_type: '1',
-//                   layout_image: 'https://api.argon.uz/layout_files/webp/nbA6WO54Oe.webp',
-//                   created_at: '2024-01-24 12:30:19',
-//                 },
-//                 {
-//                   apartment_id: '35',
-//                   apartment_name: '1 \u0445\u043e\u043d\u0430 46,,5',
-//                   apartment_area: '46.50',
-//                   rooms_number: '1',
-//                   stock_status: '1',
-//                   price_square_meter: '2500000',
-//                   totalprice: '116250000',
-//                   layout_id: '23',
-//                   layout_name: '1 \u0445\u043e\u043d\u0430 46,,5',
-//                   layout_type: '1',
-//                   layout_image: 'https://api.argon.uz/layout_files/webp/kNJTPE8cqu.webp',
-//                   created_at: '2024-01-25 14:37:34',
-//                 },
-//                 {
-//                   apartment_id: '36',
-//                   apartment_name: '1 \u0445\u043e\u043d\u0430 46,5',
-//                   apartment_area: '46.50',
-//                   rooms_number: '1',
-//                   stock_status: '1',
-//                   price_square_meter: '2300000',
-//                   totalprice: '106950000',
-//                   layout_id: '24',
-//                   layout_name: '1 \u0445\u043e\u043d\u0430 46,5',
-//                   layout_type: '1',
-//                   layout_image: 'https://api.argon.uz/layout_files/webp/ZNEBqTLsW3.webp',
-//                   created_at: '2024-01-25 14:37:52',
-//                 },
-//               ],
-//             },
-//             {
-//               floor_id: '32',
-//               floor_number: '2',
-//               floor_type: '1',
-//               apartments_number: '4',
-//               apartments: [
-//                 {
-//                   apartment_id: '37',
-//                   apartment_name: '1 \u0445\u043e\u043d\u0430 46',
-//                   apartment_area: '46.00',
-//                   rooms_number: '1',
-//                   stock_status: '1',
-//                   price_square_meter: '2000000',
-//                   totalprice: '92000000',
-//                   layout_id: '25',
-//                   layout_name: '1 \u0445\u043e\u043d\u0430 46',
-//                   layout_type: '1',
-//                   layout_image: 'https://api.argon.uz/layout_files/webp/x7lCUNe8OJ.webp',
-//                   created_at: '2024-01-25 14:39:49',
-//                 },
-//               ],
-//             },
-//           ],
-//         },
-//         {
-//           entrance_id: '15',
-//           entrance_name: '2- \u043f\u043e\u0434\u044a\u0435\u0437\u0434',
-//           floor: [],
-//         },
-//       ],
-//     },
-//   ],
-// };
+// Цвета статусов из палитры темы (валидный hex — работает с alpha()).
+// 1 — Свободно, 2/4 — Забронировано, 3 — Продано, остальное — серый.
+const STATUS_HEX = (theme) => ({
+  1: theme.palette.success.main,
+  2: theme.palette.warning.main,
+  3: theme.palette.error.main,
+  4: theme.palette.warning.main,
+  5: theme.palette.grey[500],
+});
+
+// Соответствие квартиры поисковому запросу.
+const matchApartment = (apartment, query) => {
+  if (!query) return true;
+  const q = query.trim().toLowerCase();
+  return (
+    `${apartment?.apartment_name ?? ''}`.toLowerCase().includes(q) ||
+    `${apartment?.rooms_number ?? ''}`.toLowerCase().includes(q)
+  );
+};
+
+// Фильтрация всего дерева объектов по запросу с отбрасыванием пустых веток.
+const filterTree = (objects, query) =>
+  (objects || [])
+    .map((object) => {
+      const blocks = (object.block || [])
+        .map((block) => {
+          const entrances = (block.entrance || [])
+            .map((entrance) => {
+              const floors = (entrance.floor || [])
+                .map((floor) => {
+                  const apartments = (floor.apartments || []).filter((apt) =>
+                    matchApartment(apt, query)
+                  );
+                  return apartments.length ? { ...floor, apartments } : null;
+                })
+                .filter(Boolean);
+              return floors.length ? { ...entrance, floor: floors } : null;
+            })
+            .filter(Boolean);
+          return entrances.length ? { ...block, entrance: entrances } : null;
+        })
+        .filter(Boolean);
+      return blocks.length ? { ...object, block: blocks } : null;
+    })
+    .filter(Boolean);
+
+// Все id узлов дерева (для авто-раскрытия при поиске).
+const collectNodeIds = (objects) => {
+  const ids = [];
+  (objects || []).forEach((object) => {
+    ids.push(`object-${object.project_id}`);
+    (object.block || []).forEach((block) => {
+      ids.push(`block-${block.block_id}`);
+      (block.entrance || []).forEach((entrance) => {
+        ids.push(`entrance-${entrance.entrance_id}`);
+        (entrance.floor || []).forEach((floor) => {
+          ids.push(`floor-${floor.floor_id}`);
+        });
+      });
+    });
+  });
+  return ids;
+};
+
+// Подсчёт свободных квартир (stock_status === '1').
+const countAvailable = (objects) => {
+  let count = 0;
+  (objects || []).forEach((object) =>
+    (object.block || []).forEach((block) =>
+      (block.entrance || []).forEach((entrance) =>
+        (entrance.floor || []).forEach((floor) =>
+          (floor.apartments || []).forEach((apt) => {
+            if (apt?.stock_status === '1') count += 1;
+          })
+        )
+      )
+    )
+  );
+  return count;
+};
+
+// ----------------------------------------------------------------------
+
+function LegendDot({ color, label }) {
+  return (
+    <Stack direction="row" alignItems="center" spacing={0.5}>
+      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }} />
+      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+        {label}
+      </Typography>
+    </Stack>
+  );
+}
+
+LegendDot.propTypes = {
+  color: PropTypes.string,
+  label: PropTypes.string,
+};
+
+// ----------------------------------------------------------------------
 
 export default function RoomListDialog({
-  title = 'Address Book',
-  list,
+  title = 'Помещения',
   action,
   //
   open,
@@ -247,18 +192,26 @@ export default function RoomListDialog({
   selected,
   onSelect,
 }) {
+  const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
+  const [expanded, setExpanded] = useState([]);
 
   const { objectsTree } = useGetObjectsTreeList();
 
-  const dataFiltered = applyFilter({
-    inputData: list,
-    query: searchTerm,
-  });
+  const filteredTree = useMemo(
+    () => filterTree(objectsTree, searchTerm),
+    [objectsTree, searchTerm]
+  );
 
-  const notFound = !dataFiltered.length && !!searchTerm;
+  const availableTotal = useMemo(() => countAvailable(objectsTree), [objectsTree]);
 
-  const handleSelectClient = useCallback(
+  // При активном поиске раскрываем все совпавшие ветки автоматически.
+  const autoExpanded = useMemo(() => collectNodeIds(filteredTree), [filteredTree]);
+  const expandedToUse = searchTerm ? autoExpanded : expanded;
+
+  const notFound = !filteredTree.length;
+
+  const handleSelectApartment = useCallback(
     (apartment) => {
       if (apartment?.stock_status === '1') {
         onSelect(apartment);
@@ -269,196 +222,224 @@ export default function RoomListDialog({
     [onClose, onSelect]
   );
 
-  const checkApartmentsExistenceInBlock = (data) =>
-    data.entrance &&
-    data.entrance.some(
-      (entrance) =>
-        entrance.floor &&
-        entrance.floor.some((floor) => floor.apartments && floor.apartments.length > 0)
-    );
-  const checkApartmentsExistenceInEntrance = (entrance) =>
-    entrance.floor &&
-    entrance.floor.some((floor) => floor.apartments && floor.apartments.length > 0);
-
-  const checkApartmentsExistenceInFloor = (floor) =>
-    floor.apartments && floor.apartments.length > 0;
+  const handleClose = useCallback(() => {
+    setSearchTerm('');
+    onClose();
+  }, [onClose]);
 
   const renderApartments = (apartments) =>
-    apartments.map((apartment) => (
-      <StyledTreeItem
-        disabled={apartment.stock_status !== '1'}
-        key={uuidv4()}
-        nodeId={uuidv4()}
-        labelText={
-          <Stack
-            direction="row"
-            sx={{ width: 1 }}
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <Typography>{apartment.apartment_name}</Typography>
-            <Stack direction="row" alignItems="center" gap={1}>
+    apartments.map((apartment) => {
+      const isAvailable = apartment.stock_status === '1';
+      const isSelected = selected?.(apartment.apartment_id);
+      // Гарантированно валидный hex-цвет из палитры (alph() не понимает 'gray'/undefined).
+      const statusColor = STATUS_HEX(theme)[apartment.stock_status] || theme.palette.grey[500];
+      const statusTitle = getStatusTitle(apartment.stock_status) || 'Недоступно';
+
+      return (
+        <StyledTreeItemRoot
+          disabled={!isAvailable}
+          key={`apt-${apartment.apartment_id}`}
+          nodeId={`apt-${apartment.apartment_id}`}
+          onClick={() => handleSelectApartment(apartment)}
+          sx={{
+            [`& > .${treeItemClasses.content}`]: {
+              borderRadius: 1,
+              border: `1px solid ${alpha(theme.palette.grey[500], 0.16)}`,
+              my: 0.5,
+              ...(isSelected && {
+                borderColor: theme.palette.primary.main,
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
+              }),
+              ...(isAvailable && {
+                cursor: 'pointer',
+              }),
+            },
+          }}
+          label={
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{ py: 0.75, width: 1, opacity: isAvailable ? 1 : 0.6 }}
+            >
               <Box
                 sx={{
-                  width: 8,
-                  height: 9,
-                  borderRadius: '100%',
-                  background: getStatusColor(apartment.stock_status),
+                  width: 32,
+                  height: 32,
+                  flexShrink: 0,
+                  borderRadius: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: statusColor,
+                  bgcolor: alpha(statusColor || theme.palette.grey[500], 0.12),
+                }}
+              >
+                <Iconify icon="solar:home-2-bold-duotone" width={18} />
+              </Box>
+
+              <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
+                <Typography variant="subtitle2" noWrap>
+                  № {apartment.apartment_name}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap>
+                  {`${apartment.rooms_number}-комн. · ${apartment.apartment_area} м²`}
+                </Typography>
+              </Stack>
+
+              <Chip
+                size="small"
+                label={statusTitle}
+                sx={{
+                  height: 22,
+                  color: statusColor,
+                  fontWeight: 600,
+                  bgcolor: alpha(statusColor || theme.palette.grey[500], 0.12),
                 }}
               />
-              <Typography variant="caption">Кол-во комнат: {apartment.rooms_number}</Typography>
-            </Stack>
-          </Stack>
-        }
-        labelIcon={() => <Iconify mr={1} icon="fluent:conference-room-48-filled" />}
-        onClick={() => handleSelectClient(apartment)}
 
-        // Добавьте другие свойства, которые вы хотите использовать
-      />
-    ));
+              {isAvailable && (
+                <Iconify
+                  icon="eva:arrow-ios-forward-fill"
+                  width={18}
+                  sx={{ color: 'text.disabled' }}
+                />
+              )}
+            </Stack>
+          }
+        />
+      );
+    });
 
   const renderFloors = (floors) =>
-    floors.map(
-      (floor) =>
-        checkApartmentsExistenceInFloor(floor) && (
-          <StyledTreeItem
-            key={floor.floor_id}
-            nodeId={uuidv4()}
-            labelText={`Этаж - ${floor.floor_number}`}
-            labelIcon={() => <Iconify mr={1} icon="material-symbols:floor" />}
-
-            // Добавьте другие свойства, которые вы хотите использовать
-          >
-            {renderApartments(floor.apartments)}
-          </StyledTreeItem>
-        )
-    );
+    floors.map((floor) => (
+      <StyledTreeItem
+        key={`floor-${floor.floor_id}`}
+        nodeId={`floor-${floor.floor_id}`}
+        labelText={`Этаж ${floor.floor_number}`}
+        labelInfo={`${floor.apartments.length} кв.`}
+        labelIcon={() => <Iconify icon="material-symbols:floor" />}
+      >
+        {renderApartments(floor.apartments)}
+      </StyledTreeItem>
+    ));
 
   const renderEntrances = (entrances) =>
-    entrances.map(
-      (entrance) =>
-        checkApartmentsExistenceInEntrance(entrance) && (
-          <StyledTreeItem
-            key={entrance.entrance_id}
-            nodeId={uuidv4()}
-            labelText={entrance.entrance_name}
-            labelIcon={() => <Iconify mr={1} icon="mingcute:entrance-line" />}
-
-            // Добавьте другие свойства, которые вы хотите использовать
-          >
-            {renderFloors(entrance.floor)}
-          </StyledTreeItem>
-        )
-    );
+    entrances.map((entrance) => (
+      <StyledTreeItem
+        key={`entrance-${entrance.entrance_id}`}
+        nodeId={`entrance-${entrance.entrance_id}`}
+        labelText={entrance.entrance_name}
+        labelIcon={() => <Iconify icon="mingcute:entrance-line" />}
+      >
+        {renderFloors(entrance.floor)}
+      </StyledTreeItem>
+    ));
 
   const renderBlocks = (blocks) =>
-    blocks.map(
-      (block) =>
-        checkApartmentsExistenceInBlock(block) && (
-          <StyledTreeItem
-            key={block.block_id}
-            nodeId={uuidv4()}
-            labelText={`${block.block_name}`}
-            labelIcon={() => <Iconify mr={1} icon="fa-solid:building" />}
-            // Добавьте другие свойства, которые вы хотите использовать
-          >
-            {renderEntrances(block.entrance)}
-          </StyledTreeItem>
-        )
-    );
+    blocks.map((block) => (
+      <StyledTreeItem
+        key={`block-${block.block_id}`}
+        nodeId={`block-${block.block_id}`}
+        labelText={`Блок ${block.block_name}`}
+        labelIcon={() => <Iconify icon="fa-solid:building" />}
+      >
+        {renderEntrances(block.entrance)}
+      </StyledTreeItem>
+    ));
 
   const renderObjects = (objects) =>
     objects.map((object) => (
       <StyledTreeItem
-        key={object.project_id}
-        nodeId={uuidv4()}
-        labelText={`${object.project_name}`}
-        labelIcon={() => <Iconify mr={1} icon="solar:buildings-2-bold" />}
-
-        // Добавьте другие свойства, которые вы хотите использовать
+        key={`object-${object.project_id}`}
+        nodeId={`object-${object.project_id}`}
+        labelText={object.project_name}
+        labelIcon={() => <Iconify icon="solar:buildings-2-bold" />}
       >
         {renderBlocks(object.block)}
       </StyledTreeItem>
     ));
 
   const renderList = (
-    <Stack
-      spacing={0.5}
-      sx={{
-        px: 1.5,
-        py: 1,
-
-        maxHeight: 80 * 8,
-        overflowX: 'hidden',
-      }}
-    >
+    <Box sx={{ px: 2.5, pb: 2 }}>
       <TreeView
-        aria-label="gmail"
-        defaultExpanded={['3']}
+        aria-label="apartments"
+        expanded={expandedToUse}
+        onNodeToggle={(event, nodeIds) => {
+          if (!searchTerm) setExpanded(nodeIds);
+        }}
         defaultCollapseIcon={<ArrowDropDownIcon />}
         defaultExpandIcon={<ArrowRightIcon />}
         defaultEndIcon={<div style={{ width: 24 }} />}
-        sx={{ height: 264, flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
+        sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: 460 }}
       >
-        {renderObjects(objectsTree)}
+        {renderObjects(filteredTree)}
       </TreeView>
-    </Stack>
+    </Box>
   );
 
   return (
-    <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ p: 3, pr: 1.5 }}
-      >
-        <Typography variant="h6"> {title} </Typography>
+    <Dialog fullWidth maxWidth="sm" open={open} onClose={handleClose}>
+      <Stack sx={{ p: 3, pb: 2 }} spacing={2}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="h6">{title}</Typography>
+            <Chip
+              size="small"
+              color="success"
+              variant="soft"
+              label={`Свободно: ${availableTotal}`}
+            />
+          </Stack>
 
-        {action && action}
-      </Stack>
+          {action && action}
+        </Stack>
 
-      {/* <Stack sx={{ p: 2, pt: 0 }}>
         <TextField
+          fullWidth
+          size="small"
           value={searchTerm}
-          onChange={handleSearchChange}
-          placeholder="Найти..."
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Поиск по номеру или кол-ву комнат..."
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
                 <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
               </InputAdornment>
             ),
+            endAdornment: searchTerm ? (
+              <InputAdornment position="end">
+                <Iconify
+                  icon="eva:close-fill"
+                  sx={{ color: 'text.disabled', cursor: 'pointer' }}
+                  onClick={() => setSearchTerm('')}
+                />
+              </InputAdornment>
+            ) : null,
           }}
         />
-      </Stack> */}
 
-      {notFound ? <SearchNotFound query={searchTerm} sx={{ px: 3, pt: 5, pb: 10 }} /> : renderList}
+        <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+          <LegendDot color={getStatusColor('1')} label="Свободно" />
+          <LegendDot color={getStatusColor('2')} label="Забронировано" />
+          <LegendDot color={getStatusColor('3')} label="Продано" />
+        </Stack>
+      </Stack>
+
+      {notFound ? (
+        <SearchNotFound query={searchTerm || 'Нет данных'} sx={{ px: 3, pt: 3, pb: 8 }} />
+      ) : (
+        renderList
+      )}
     </Dialog>
   );
 }
 
 RoomListDialog.propTypes = {
   action: PropTypes.node,
-  list: PropTypes.array,
   onClose: PropTypes.func,
   onSelect: PropTypes.func,
   open: PropTypes.bool,
   selected: PropTypes.func,
   title: PropTypes.string,
 };
-
-// ----------------------------------------------------------------------
-
-function applyFilter({ inputData, query }) {
-  if (query) {
-    return inputData.filter(
-      (address) =>
-        address.name.toLowerCase().indexOf(query.toLowerCase()) !== -1 ||
-        address.fullAddress.toLowerCase().indexOf(query.toLowerCase()) !== -1 ||
-        `${address.company}`.toLowerCase().indexOf(query.toLowerCase()) !== -1
-    );
-  }
-
-  return inputData;
-}
