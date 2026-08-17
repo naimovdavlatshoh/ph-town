@@ -408,12 +408,21 @@ export function useSearchClientsFromContract(query) {
   return memoizedValue;
 }
 
-export function useGetOverduedays(page = 1) {
+export function useGetOverduedays(page = 1, search = '') {
   const URL = endpoints.contract.overduedays;
+
+  const queryObject = { page };
+
+  // Пустой поиск на бэкенд не отправляем — фильтр не применяется.
+  if (search) {
+    queryObject.search = search;
+  }
+
+  const query = queryString.stringify(queryObject);
 
   // keepPreviousData: при смене страницы прошлые строки остаются видимыми,
   // пока грузится новая страница — таблица не «моргает».
-  const { data, isLoading, error, isValidating } = useSWR(`${URL}?page=${page}`, fetcher, {
+  const { data, isLoading, error, isValidating } = useSWR(`${URL}?${query}`, fetcher, {
     keepPreviousData: true,
   });
 

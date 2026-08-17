@@ -11,9 +11,11 @@ import { convert as convertNumberToWordsRu } from 'number-to-words-ru';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Tooltip from '@mui/material/Tooltip';
+import TextField from '@mui/material/TextField';
 import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
 import { Box, Stack, ButtonBase } from '@mui/material';
 import LinearProgress from '@mui/material/LinearProgress';
 import TableContainer from '@mui/material/TableContainer';
@@ -112,6 +114,7 @@ export default function OverdueListView() {
   const navigate = useNavigate();
 
   const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -145,19 +148,25 @@ export default function OverdueListView() {
 
   const { user } = useAuthContext();
 
+  // Дебаунсим ввод, чтобы не дёргать бэкенд на каждый символ.
+  // minLength = 0 — пустая строка тоже проходит, чтобы поиск можно было сбросить.
+  const debouncedSearch = useDebounce(search, 0);
+
   // page — 0-индексированный (для MUI-пагинации), на бэкенд шлём страницу с 1
   const { overduedaysLoading, overduedaysValidating, overduedays, overduedaysEmpty, count } =
-    useGetOverduedays(page + 1);
+    useGetOverduedays(page + 1, debouncedSearch);
 
   // показываем лоадер и при первой загрузке, и при переходе между страницами
   const showLoader = overduedaysLoading || overduedaysValidating;
 
-  const debounceClient = useDebounce(filters.client, 3);
-  // const { searchResults, searchResultsLoading } = useSearchClientsFromContract(debounceClient);
-
   useEffect(() => {
     setTableData(overduedays);
   }, [overduedays]);
+
+  // При новом поисковом запросе возвращаемся на первую страницу.
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     if (pageNum) {
@@ -500,6 +509,29 @@ export default function OverdueListView() {
         />
 
         <Card>
+          <Stack sx={{ p: 2.5 }}>
+            <TextField
+              fullWidth
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Поиск по имени, фамилии или номеру контракта..."
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: search ? (
+                  <InputAdornment position="end">
+                    <IconButton size="small" edge="end" onClick={() => setSearch('')}>
+                      <Iconify icon="eva:close-fill" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+              }}
+            />
+          </Stack>
+
           {/* <Tabs
             value={filters.status.value}
             onChange={handleFilterStatus}

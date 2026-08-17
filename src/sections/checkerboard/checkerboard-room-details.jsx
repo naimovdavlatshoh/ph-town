@@ -842,7 +842,7 @@ export default function CheckerboardRoomDetails({
             </Grid>
 
             {/* График рассрочки */}
-            <Typography fontWeight={600} mt={2} mb={1}>
+            {/* <Typography fontWeight={600} mt={2} mb={1}>
               График рассрочки
             </Typography>
             <TableContainer component={Paper} variant="outlined">
@@ -865,7 +865,7 @@ export default function CheckerboardRoomDetails({
                   ))}
                 </TableBody>
               </Table>
-            </TableContainer>
+            </TableContainer> */}
 
             {/* Примечание */}
             <Stack gap={1} mt={2}>
