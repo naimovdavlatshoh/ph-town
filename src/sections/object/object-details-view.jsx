@@ -24,6 +24,7 @@ import BlockList from '../blocks/block-list';
 import ObjectNewEditForm from './object-new-edit-form';
 import ObjectDetailsToolbar from './object-details-toolbar';
 import BlockNewEditForm from '../blocks/block-new-edit-form';
+import ParkingManageDialog from '../parking/parking-manage-dialog';
 
 // ----------------------------------------------------------------------
 
@@ -38,6 +39,7 @@ export default function ObjectDetailsView({ id }) {
 
   const editObject = useBoolean();
   const newBlock = useBoolean();
+  const parkingManage = useBoolean();
 
   const currentJob = _jobs.filter((job) => job.id === id)[0];
 
@@ -84,6 +86,17 @@ export default function ObjectDetailsView({ id }) {
 
             ['1', '2'].includes(user?.role) && (
               <Button
+                onClick={parkingManage.onTrue}
+                color="info"
+                variant="contained"
+                startIcon={<Iconify icon="mdi:car-parking-lights" />}
+              >
+                Парковка
+              </Button>
+            ),
+
+            ['1', '2'].includes(user?.role) && (
+              <Button
                 onClick={newBlock.onTrue}
                 variant="contained"
                 startIcon={<Iconify icon="mingcute:add-line" />}
@@ -114,6 +127,12 @@ export default function ObjectDetailsView({ id }) {
         onClose={newBlock.onFalse}
         onUpdate={updateBlock}
         onCreate={create}
+      />
+      <ParkingManageDialog
+        projectId={id}
+        projectName={currentObject?.project_name}
+        open={parkingManage.value}
+        onClose={parkingManage.onFalse}
       />
     </>
   );

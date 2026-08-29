@@ -24,6 +24,7 @@ import { usePopover } from 'src/components/custom-popover';
 import CustomPopover from 'src/components/custom-popover/custom-popover';
 
 import ObjectNewEditForm from './object-new-edit-form';
+import ParkingFullscreenDialog from '../parking/parking-fullscreen-dialog';
 import CheckerboardFullscreenDialog from '../checkerboard/checkerboard-fullscreen-dialog';
 
 // ----------------------------------------------------------------------
@@ -36,6 +37,7 @@ export default function ObjectItem({ object }) {
   const { update } = useGetObjects();
 
   const fullscreen = useBoolean();
+  const parkingFullscreen = useBoolean();
   const editObject = useBoolean();
 
   const mdDown = useResponsive('down', 'md');
@@ -100,6 +102,7 @@ export default function ObjectItem({ object }) {
           textAlign="center"
           direction={!mdDown ? 'row' : 'column'}
           justifyContent="center"
+          flexWrap="wrap"
           gap={1}
         >
           {['1', '2'].includes(user?.role) && (
@@ -121,12 +124,26 @@ export default function ObjectItem({ object }) {
           >
             Шахматка
           </Button>
+
+          <Button
+            variant="outlined"
+            color="info"
+            startIcon={<Iconify width={20} icon="mdi:car-parking-lights" />}
+            onClick={parkingFullscreen.onTrue}
+          >
+            Шахматка-Парковка
+          </Button>
         </Stack>
       </Card>
       <CheckerboardFullscreenDialog
         objectId={object.project_id}
         open={fullscreen.value}
         handleClose={fullscreen.onToggle}
+      />
+      <ParkingFullscreenDialog
+        objectId={object.project_id}
+        open={parkingFullscreen.value}
+        handleClose={parkingFullscreen.onToggle}
       />
       <CustomPopover
         open={popover.open}
